@@ -221,6 +221,8 @@ def centerlines(image, threshold, speckle):
     # First traverse junctions/endpoints, then any closed cycles.
     ordered = sorted(coords, key=lambda p: (len(neighbors(p)) == 2, p))
     for start in ordered:
+        if not neighbors(start):
+            polylines.append([start, (start[0], start[1] + 0.01)])
         for nxt in neighbors(start):
             edge = tuple(sorted([start, nxt]))
             if edge in visited:

@@ -1,12 +1,15 @@
 """Verify all formats against the packaged app on port 8742."""
 
 import io
+import os
 import time
 import zipfile
 import httpx
 from PIL import Image, ImageDraw
 
-client = httpx.Client(base_url="http://127.0.0.1:8742", timeout=60)
+client = httpx.Client(
+    base_url=os.environ.get("TRACEGARDEN_URL", "http://127.0.0.1:8742"), timeout=60
+)
 for _ in range(30):
     try:
         assert client.get("/").status_code == 200
@@ -17,6 +20,7 @@ else:
     raise RuntimeError("Portable app did not start")
 im = Image.new("RGB", (128, 128), "white")
 ImageDraw.Draw(im).ellipse((20, 20, 100, 100), fill="green")
+ImageDraw.Draw(im).line((10, 64, 118, 64), fill="black", width=5)
 buf = io.BytesIO()
 im.save(buf, format="PNG")
 r = client.post("/api/trace", files={"file": ("logo.png", buf.getvalue(), "image/png")})
@@ -38,4 +42,29 @@ assert (
 )
 print(
     "Portable app: home, CPU trace, all five export formats, PNG dimensions and ZIP passed."
+)
+for options in [
+    {"geometry": True, "gradients": True},
+    {"preset": "centerline"},
+    {"layering": "mosaic"},
+]:
+    response = client.post(
+        "/api/jobs",
+        files={"file": ("logo.png", buf.getvalue(), "image/png")},
+        data={"options": __import__("json").dumps(options)},
+    )
+    assert response.status_code == 202, response.text
+    ident = response.json()["id"]
+    start = time.monotonic()
+    while True:
+        state = client.get("/api/jobs/" + ident).json()
+        if state["state"] in {"failed", "complete"}:
+            break
+        assert time.monotonic() - start < 60
+        time.sleep(0.1)
+    assert state["state"] == "complete", state
+    assert state["result"]["paths"] > 0
+    client.delete("/api/jobs/" + ident)
+print(
+    "Packaged isolated workers passed: geometry/gradient, centerline, shared boundaries."
 )

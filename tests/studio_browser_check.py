@@ -19,6 +19,7 @@ with sync_playwright() as p:
     original_count = page.locator("#vector svg path").count()
     # New polygon with actual pointer coordinates.
     page.locator("#tool").select_option("pen")
+    page.locator("#vector svg").scroll_into_view_if_needed()
     box = page.locator("#vector svg").bounding_box()
     for x, y in [(0.2, 0.2), (0.35, 0.2), (0.35, 0.35)]:
         page.mouse.click(box["x"] + box["width"] * x, box["y"] + box["height"] * y)

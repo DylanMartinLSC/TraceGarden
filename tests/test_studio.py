@@ -112,6 +112,15 @@ def test_centerline_open_strokes():
     assert r["paths"] < 5
 
 
+def test_centerline_single_pixel_skeleton():
+    im = Image.new("RGB", (64, 64), "white")
+    ImageDraw.Draw(im).ellipse((10, 10, 50, 50), fill="black")
+    out = io.BytesIO()
+    im.save(out, format="PNG")
+    result = trace(out.getvalue(), Options(preset="centerline", speckle=0))
+    assert result["paths"] >= 1
+
+
 def test_print_size_and_cmyk_pdf():
     import ezdxf
 

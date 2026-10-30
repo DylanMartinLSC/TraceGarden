@@ -7,3 +7,8 @@
 *.md text eol=lf
 *.sh text eol=lf
 *.cmd text eol=crlf
+*.ps1 text eol=lf
+*.toml text eol=lf
+*.json text eol=lf
+*.txt text eol=lf
+third-party-licenses/** -whitespace
