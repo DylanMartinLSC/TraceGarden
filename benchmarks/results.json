@@ -1,0 +1,99 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+  "python": "3.12.8",
+  "engine": "vtracer 0.6.15",
+  "notes": "End-to-end decode, preprocessing, CPU tracing and serialization. Synthetic fixtures; no GPU or network. Quality and commercial-engine speed not compared.",
+  "results": [
+    {
+      "case": "logo",
+      "size": 512,
+      "median_s": 0.041,
+      "min_s": 0.039,
+      "max_s": 0.042,
+      "paths": 3,
+      "svg_bytes": 1768,
+      "runs": 3
+    },
+    {
+      "case": "illustration",
+      "size": 512,
+      "median_s": 0.055,
+      "min_s": 0.054,
+      "max_s": 0.055,
+      "paths": 47,
+      "svg_bytes": 53031,
+      "runs": 3
+    },
+    {
+      "case": "gradient",
+      "size": 512,
+      "median_s": 0.033,
+      "min_s": 0.033,
+      "max_s": 0.033,
+      "paths": 2,
+      "svg_bytes": 2125,
+      "runs": 3
+    },
+    {
+      "case": "logo",
+      "size": 1024,
+      "median_s": 0.169,
+      "min_s": 0.167,
+      "max_s": 0.172,
+      "paths": 3,
+      "svg_bytes": 1518,
+      "runs": 3
+    },
+    {
+      "case": "illustration",
+      "size": 1024,
+      "median_s": 0.222,
+      "min_s": 0.219,
+      "max_s": 0.224,
+      "paths": 258,
+      "svg_bytes": 107918,
+      "runs": 3
+    },
+    {
+      "case": "gradient",
+      "size": 1024,
+      "median_s": 0.138,
+      "min_s": 0.134,
+      "max_s": 0.14,
+      "paths": 2,
+      "svg_bytes": 2192,
+      "runs": 3
+    },
+    {
+      "case": "logo",
+      "size": 2048,
+      "median_s": 0.743,
+      "min_s": 0.74,
+      "max_s": 0.8,
+      "paths": 3,
+      "svg_bytes": 5378,
+      "runs": 3
+    },
+    {
+      "case": "illustration",
+      "size": 2048,
+      "median_s": 0.941,
+      "min_s": 0.906,
+      "max_s": 0.993,
+      "paths": 258,
+      "svg_bytes": 118315,
+      "runs": 3
+    },
+    {
+      "case": "gradient",
+      "size": 2048,
+      "median_s": 0.584,
+      "min_s": 0.567,
+      "max_s": 0.624,
+      "paths": 2,
+      "svg_bytes": 2373,
+      "runs": 3
+    }
+  ]
+}
