@@ -1,0 +1,198 @@
+{
+  "platform": "Windows-11-10.0.26200-SP0",
+  "processor": "AMD64 Family 26 Model 68 Stepping 0, AuthenticAMD",
+  "python": "3.12.8",
+  "notes": "Three fresh spawned workers per case. Trace time excludes imports/startup; process wall includes startup and quality rendering. Peak RSS sampled every 10ms includes imports, tracing and quality rendering, may miss brief peaks. MAE normalized RGB vs white-composited render; centerline is intentionally a one-pixel skeleton, so MAE is not directly comparable. Seeded synthetic textures are not photographs. No commercial comparison.",
+  "results": [
+    {
+      "case": "logo",
+      "size": 512,
+      "runs": 3,
+      "trace_median_s": 0.0707,
+      "process_wall_median_s": 0.9878,
+      "peak_rss_mib": 124.5,
+      "mae": 0.00265,
+      "paths": 3,
+      "svg_bytes": 481,
+      "config": {
+        "geometry": true,
+        "gradients": false,
+        "preset": "logo",
+        "layering": "stacked",
+        "colors": 16,
+        "precision": 6
+      }
+    },
+    {
+      "case": "logo",
+      "size": 1024,
+      "runs": 3,
+      "trace_median_s": 0.2003,
+      "process_wall_median_s": 1.197,
+      "peak_rss_mib": 229.0,
+      "mae": 0.00128,
+      "paths": 3,
+      "svg_bytes": 489,
+      "config": {
+        "geometry": true,
+        "gradients": false,
+        "preset": "logo",
+        "layering": "stacked",
+        "colors": 16,
+        "precision": 6
+      }
+    },
+    {
+      "case": "gradient",
+      "size": 512,
+      "runs": 3,
+      "trace_median_s": 0.0701,
+      "process_wall_median_s": 0.9448,
+      "peak_rss_mib": 124.1,
+      "mae": 0.00024,
+      "paths": 1,
+      "svg_bytes": 518,
+      "config": {
+        "geometry": false,
+        "gradients": true,
+        "preset": "photo",
+        "layering": "stacked",
+        "colors": 16,
+        "precision": 3
+      }
+    },
+    {
+      "case": "gradient",
+      "size": 1024,
+      "runs": 3,
+      "trace_median_s": 0.18,
+      "process_wall_median_s": 1.1862,
+      "peak_rss_mib": 234.9,
+      "mae": 0.00077,
+      "paths": 1,
+      "svg_bytes": 530,
+      "config": {
+        "geometry": false,
+        "gradients": true,
+        "preset": "photo",
+        "layering": "stacked",
+        "colors": 16,
+        "precision": 3
+      }
+    },
+    {
+      "case": "mosaic",
+      "size": 512,
+      "runs": 3,
+      "trace_median_s": 0.063,
+      "process_wall_median_s": 0.9415,
+      "peak_rss_mib": 122.5,
+      "mae": 0.00214,
+      "paths": 3,
+      "svg_bytes": 25188,
+      "config": {
+        "geometry": false,
+        "gradients": false,
+        "preset": "logo",
+        "layering": "mosaic",
+        "colors": 16,
+        "precision": 6
+      }
+    },
+    {
+      "case": "mosaic",
+      "size": 1024,
+      "runs": 3,
+      "trace_median_s": 0.1108,
+      "process_wall_median_s": 1.0868,
+      "peak_rss_mib": 204.9,
+      "mae": 0.00107,
+      "paths": 3,
+      "svg_bytes": 49677,
+      "config": {
+        "geometry": false,
+        "gradients": false,
+        "preset": "logo",
+        "layering": "mosaic",
+        "colors": 16,
+        "precision": 6
+      }
+    },
+    {
+      "case": "centerline",
+      "size": 512,
+      "runs": 3,
+      "trace_median_s": 0.1297,
+      "process_wall_median_s": 0.9989,
+      "peak_rss_mib": 116.9,
+      "mae": 0.19575,
+      "paths": 7,
+      "svg_bytes": 1318,
+      "config": {
+        "geometry": false,
+        "gradients": false,
+        "preset": "centerline",
+        "layering": "stacked",
+        "colors": 16,
+        "precision": 6
+      }
+    },
+    {
+      "case": "centerline",
+      "size": 1024,
+      "runs": 3,
+      "trace_median_s": 0.1817,
+      "process_wall_median_s": 1.1199,
+      "peak_rss_mib": 174.4,
+      "mae": 0.20289,
+      "paths": 7,
+      "svg_bytes": 1333,
+      "config": {
+        "geometry": false,
+        "gradients": false,
+        "preset": "centerline",
+        "layering": "stacked",
+        "colors": 16,
+        "precision": 6
+      }
+    },
+    {
+      "case": "textured",
+      "size": 512,
+      "runs": 3,
+      "trace_median_s": 0.642,
+      "process_wall_median_s": 4.1555,
+      "peak_rss_mib": 163.3,
+      "mae": 0.06366,
+      "paths": 8037,
+      "svg_bytes": 2750348,
+      "config": {
+        "geometry": false,
+        "gradients": false,
+        "preset": "photo",
+        "layering": "stacked",
+        "colors": 16,
+        "precision": 6
+      }
+    },
+    {
+      "case": "textured",
+      "size": 1024,
+      "runs": 3,
+      "trace_median_s": 5.2273,
+      "process_wall_median_s": 17.2665,
+      "peak_rss_mib": 384.4,
+      "mae": 0.06347,
+      "paths": 32160,
+      "svg_bytes": 11433082,
+      "config": {
+        "geometry": false,
+        "gradients": false,
+        "preset": "photo",
+        "layering": "stacked",
+        "colors": 16,
+        "precision": 6
+      }
+    }
+  ]
+}

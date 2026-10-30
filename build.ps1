@@ -3,7 +3,7 @@ Set-Location $PSScriptRoot
 & .venv\Scripts\python.exe -m ensurepip --upgrade
 & .venv\Scripts\python.exe -m pip install pyinstaller
 if ($LASTEXITCODE) { throw 'Build dependencies failed' }
-& .venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --name TraceGarden --collect-all tracegarden --collect-all vtracer --collect-all svglib --collect-all reportlab --hidden-import _rl_renderPM --hidden-import svgpathtools --collect-submodules uvicorn launcher.py
+& .venv\Scripts\python.exe -m PyInstaller --noconfirm --clean --name TraceGarden --collect-all tracegarden --collect-all vtracer --collect-all reportlab --hidden-import svgpathtools --collect-submodules uvicorn --collect-submodules skimage.morphology --collect-data skimage --collect-all shapely launcher.py
 if ($LASTEXITCODE) { throw 'Packaging failed' }
 & .venv\Scripts\python.exe scripts\notices.py
 Copy-Item README.md,FEATURES.md,LICENSE,THIRD_PARTY_NOTICES.md,dependency-licenses.json -Destination dist\TraceGarden

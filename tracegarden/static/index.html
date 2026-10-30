@@ -1,8 +1,402 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>TraceGarden — Local vector studio</title><link rel="stylesheet" href="/static/style.css"><script defer src="/static/app.js"></script></head>
-<body><header><a class="brand" href="/">◈ TraceGarden <span>LOCAL VECTOR STUDIO</span></a><span class="private">● On your computer · CPU only</span></header>
-<main><section class="intro"><p class="eyebrow">SMALL PIXELS. BIG POSSIBILITIES.</p><h1>Give your images<br>a sharper future.</h1><p>Turn logos, sketches and artwork into editable vectors.<br>No uploads to the cloud. No subscriptions. Yours to keep.</p></section>
-<section class="studio" aria-label="Vector studio"><aside><h2>1. Add your artwork</h2><label id="drop" class="drop" tabindex="0">＋<strong>Drop images here</strong><span>or click to browse</span><small>PNG, JPG, WebP, GIF, BMP, TIFF<br>25 MB / 16 megapixels per image</small><input id="files" type="file" accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/tiff" multiple></label><button id="demo" class="quiet">Try a sample image</button><ul id="queue" aria-label="Image queue"></ul>
-<h2>2. Choose a style</h2><label>Artwork type<select id="preset"><option value="logo">Logo · clean, limited colors</option><option value="illustration">Illustration · colorful artwork</option><option value="photo">Photo · detailed color regions</option><option value="ink">Ink · black and white</option><option value="pixel">Pixel art · straight edges</option></select></label><label>Palette size <output id="colorsValue">16</output><input id="colors" type="range" min="2" max="64" value="16"></label><label class="check"><input id="remove_white" type="checkbox"> Make near-white pixels transparent</label><details><summary>Fine-tune your trace</summary><label>Remove tiny marks <input id="speckle" type="number" min="0" max="64" value="4"></label><label>Corner threshold <input id="corner" type="number" min="0" max="180" value="60"></label><label>Color precision <input id="precision" type="number" min="1" max="8" value="4"></label><label>Black / white threshold <input id="threshold" type="range" min="0" max="255" value="128"></label><label>Maximum side (pixels)<select id="max_size"><option>800</option><option selected>1600</option><option>2400</option><option>4096</option></select></label><label class="check"><input id="smooth" type="checkbox"> Smooth noisy pixels</label><p>More detail takes longer and creates larger files. Photos become flat color regions; text becomes outlines.</p></details><button id="convert" class="primary" disabled>Vectorize images →</button><button id="clear" class="quiet">Clear this session</button></aside>
-<article><div class="toolbar"><div class="tabs" role="group" aria-label="Preview mode"><button data-view="compare" aria-pressed="true">Compare</button><button data-view="vector" aria-pressed="false">Vector</button><button data-view="original" aria-pressed="false">Original</button></div><label class="zoom">Zoom<select id="zoom"><option value="1">Fit</option><option value="2">200%</option><option value="4">400%</option></select></label></div><div id="status" role="status" aria-live="polite">Add an image or try the sample to begin.</div><progress id="progress" value="0" max="1" hidden></progress><div id="previews"><div class="pane" id="originalPane"><span class="caption">ORIGINAL</span><div class="viewport"><img id="original" alt="Original artwork" hidden></div></div><div class="pane" id="vectorPane"><span class="caption">VECTOR</span><div class="viewport" id="vector"><div class="placeholder">◈<p>Your next great vector<br>starts here.</p></div></div></div></div><div id="stats"></div><section id="editor" hidden><h2>3. Make it yours</h2><p>Change a color below, or click a shape to select it.</p><div id="palette"></div><div class="actions"><button id="delete">Delete selected shape</button><button id="undo">Undo edit</button><button id="reset">Reset edits</button></div><div class="export"><label>Save as<select id="format"><option value="svg">SVG · editable vector</option><option value="pdf">PDF · print & sharing</option><option value="eps">EPS · design software</option><option value="png">PNG · raster preview</option><option value="dxf">DXF · sampled cutting outlines</option></select></label><button id="save" class="primary">Download selected</button><button id="saveAll">Download all</button></div><small>DXF uses unitless polylines (1 unit = 1 pixel), with no fills. Check scale and paths in your cutting software.</small></section></article></section><footer>Free & open source · No account, tracking, GPU or internet required after installation.<br>Animated images use the first frame. Work stays in this browser session until you save or clear it.</footer></main></body></html>
-
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>TraceGarden — Local vector studio</title>
+    <link rel="stylesheet" href="/static/style.css" />
+    <script defer src="/static/app.js"></script>
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="/"
+        >◈ TraceGarden <span>LOCAL VECTOR STUDIO</span></a
+      ><span class="private">● On your computer · CPU only</span>
+      <div class="projectbar">
+        <button id="saveProject">Save project</button
+        ><button id="openProject">Open project</button
+        ><button id="recoverProject">Recover autosave</button
+        ><input
+          id="projectFile"
+          type="file"
+          accept=".tracegarden,application/json"
+          hidden
+        />
+      </div>
+    </header>
+    <main>
+      <section class="intro">
+        <p class="eyebrow">SMALL PIXELS. BIG POSSIBILITIES.</p>
+        <h1>Give your images<br />a sharper future.</h1>
+        <p>
+          Turn logos, sketches and artwork into editable vectors.<br />No
+          uploads to the cloud. No subscriptions. Yours to keep.
+        </p>
+      </section>
+      <section class="studio" aria-label="Vector studio">
+        <aside>
+          <h2>1. Add your artwork</h2>
+          <label id="drop" class="drop" tabindex="0"
+            >＋<strong>Drop images here</strong><span>or click to browse</span
+            ><small
+              >PNG, JPG, WebP, GIF, BMP, TIFF<br />25 MB / 16 megapixels per
+              image</small
+            ><input
+              id="files"
+              type="file"
+              accept="image/png,image/jpeg,image/webp,image/gif,image/bmp,image/tiff"
+              multiple /></label
+          ><button id="demo" class="quiet">Try a sample image</button>
+          <ul id="queue" aria-label="Image queue"></ul>
+          <h2>2. Choose a style</h2>
+          <label
+            >Artwork type<select id="preset">
+              <option value="logo">Logo · clean, limited colors</option>
+              <option value="illustration">
+                Illustration · colorful artwork
+              </option>
+              <option value="photo">Photo · detailed color regions</option>
+              <option value="ink">Ink · black and white</option>
+              <option value="centerline">Centerline · pen and engraving</option>
+              <option value="pixel">Pixel art · straight edges</option>
+            </select></label
+          ><label
+            >Palette size <output id="colorsValue">16</output
+            ><input
+              id="colors"
+              type="range"
+              min="2"
+              max="64"
+              value="16" /></label
+          ><label class="check"
+            ><input id="remove_white" type="checkbox" /> Make near-white pixels
+            transparent</label
+          >
+          <details>
+            <summary>Fine-tune your trace</summary>
+            <label
+              >Region layout<select id="layering">
+                <option value="stacked">Stacked · hides edge seams</option>
+                <option value="mosaic">
+                  Shared boundaries · flat color regions
+                </option>
+                <option value="cutout">Cutout · separate filled regions</option>
+              </select></label
+            >
+            <label class="check"
+              ><input id="geometry" type="checkbox" /> Reconstruct ellipses and
+              rectangles</label
+            ><label class="check"
+              ><input id="gradients" type="checkbox" /> Fit linear gradients
+              where appropriate</label
+            >
+            <label
+              >Color region difference<input
+                id="layer_difference"
+                type="number"
+                min="0"
+                max="255"
+                value="16"
+            /></label>
+            <label
+              >Custom palette (hex colors, comma separated)<input
+                id="customPalette"
+                type="text"
+                placeholder="#315d45, #f4dfaa"
+            /></label>
+            <label
+              >Contrast<input
+                id="contrast"
+                type="range"
+                min="0.25"
+                max="4"
+                step="0.05"
+                value="1"
+            /></label>
+            <label
+              >Rotate clockwise<select id="rotation">
+                <option value="0">0°</option>
+                <option value="90">90°</option>
+                <option value="180">180°</option>
+                <option value="270">270°</option>
+              </select></label
+            ><label class="check"
+              ><input id="flip" type="checkbox" /> Mirror horizontally</label
+            >
+            <label class="check"
+              ><input id="cropEnabled" type="checkbox" /> Crop source before
+              tracing</label
+            >
+            <div class="cropgrid">
+              <label
+                >X<input id="cropX" type="number" value="0" min="0" /></label
+              ><label
+                >Y<input id="cropY" type="number" value="0" min="0" /></label
+              ><label
+                >Width<input
+                  id="cropW"
+                  type="number"
+                  value="256"
+                  min="1" /></label
+              ><label
+                >Height<input id="cropH" type="number" value="256" min="1"
+              /></label>
+            </div>
+            <label
+              >Remove tiny marks
+              <input
+                id="speckle"
+                type="number"
+                min="0"
+                max="64"
+                value="4" /></label
+            ><label
+              >Corner threshold
+              <input
+                id="corner"
+                type="number"
+                min="0"
+                max="180"
+                value="60" /></label
+            ><label
+              >Color precision
+              <input
+                id="precision"
+                type="number"
+                min="1"
+                max="8"
+                value="4" /></label
+            ><label
+              >Black / white threshold
+              <input
+                id="threshold"
+                type="range"
+                min="0"
+                max="255"
+                value="128" /></label
+            ><label
+              >Maximum side (pixels)<select id="max_size">
+                <option>800</option>
+                <option selected>1600</option>
+                <option>2400</option>
+                <option>4096</option>
+              </select></label
+            ><label class="check"
+              ><input id="smooth" type="checkbox" /> Smooth noisy pixels</label
+            >
+            <p>
+              More detail takes longer and creates larger files. Photos become
+              flat color regions; text becomes outlines.
+            </p>
+          </details>
+          <button id="convert" class="primary" disabled>
+            Vectorize images →</button
+          ><button id="cancel" class="quiet" hidden>Cancel current batch</button
+          ><button id="clear" class="quiet">Clear this session</button>
+        </aside>
+        <article>
+          <div class="toolbar">
+            <div class="tabs" role="group" aria-label="Preview mode">
+              <button data-view="compare" aria-pressed="true">Compare</button
+              ><button data-view="vector" aria-pressed="false">Vector</button
+              ><button data-view="original" aria-pressed="false">
+                Original
+              </button>
+            </div>
+            <label class="zoom"
+              >Zoom<select id="zoom">
+                <option value="1">Fit</option>
+                <option value="2">200%</option>
+                <option value="4">400%</option>
+              </select></label
+            >
+          </div>
+          <div id="status" role="status" aria-live="polite">
+            Add an image or try the sample to begin.
+          </div>
+          <progress id="progress" value="0" max="1" hidden></progress>
+          <div id="previews">
+            <div class="pane" id="originalPane">
+              <span class="caption">ORIGINAL</span>
+              <div class="viewport">
+                <img id="original" alt="Original artwork" hidden />
+              </div>
+            </div>
+            <div class="pane" id="vectorPane">
+              <span class="caption">VECTOR</span>
+              <div class="viewport" id="vector">
+                <div class="placeholder">
+                  ◈
+                  <p>Your next great vector<br />starts here.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div id="stats"></div>
+          <details id="repair">
+            <summary>Correct pixels before tracing</summary>
+            <p>
+              Paint to join regions, remove marks or separate touching shapes.
+              Changes affect the source for the next trace.
+            </p>
+            <div class="actions">
+              <label
+                >Brush color<input
+                  type="color"
+                  id="brushColor"
+                  value="#ffffff" /></label
+              ><label
+                >Size<input
+                  type="range"
+                  id="brushSize"
+                  min="1"
+                  max="80"
+                  value="12" /></label
+              ><button id="brushToggle">Enable brush</button
+              ><button id="brushUndo">Undo brush</button>
+            </div>
+            <canvas
+              id="repairCanvas"
+              hidden
+              aria-label="Source correction canvas"
+            ></canvas>
+          </details>
+          <section id="editor" hidden>
+            <h2>3. Make it yours</h2>
+            <p>Change a color below, or click a shape to select it.</p>
+            <div id="palette"></div>
+            <div class="actions">
+              <button id="delete">Delete selected shape</button
+              ><button id="undo">Undo edit</button
+              ><button id="redo">Redo edit</button
+              ><button id="reset">Reset edits</button>
+            </div>
+            <p>
+              Click to select a shape; Shift-click selects more. Edit
+              coordinates below, or use the pen tools on the vector preview.
+            </p>
+            <div class="actions">
+              <label
+                >Tool<select id="tool">
+                  <option value="select">Select shapes</option>
+                  <option value="pen">Draw polygon</option>
+                  <option value="line">Draw open line</option>
+                </select></label
+              ><label
+                >New shape color<input
+                  id="penColor"
+                  type="color"
+                  value="#315d45" /></label
+              ><button id="finishPen">Finish drawing</button
+              ><button id="cancelPen">Cancel drawing</button>
+            </div>
+            <div class="actions">
+              <button data-op="union">Join selected</button
+              ><button data-op="subtract">Subtract selected</button
+              ><button data-op="intersect">Intersect selected</button
+              ><button data-op="split">Split contours</button
+              ><button data-op="simplify">Simplify</button
+              ><button data-op="outline">Outline</button
+              ><button data-op="reverse">Reverse direction</button
+              ><button id="front">Bring to front</button
+              ><button id="back">Send to back</button
+              ><button id="editNodes">Edit nodes</button
+              ><button id="editCurves">Edit Bezier controls</button>
+            </div>
+            <div id="nodePanel" hidden>
+              <p>
+                Node editing uses a polygon approximation. Compound shapes must
+                be split first. Enter one x,y coordinate per line, or drag the
+                handles on the preview.
+              </p>
+              <textarea
+                id="nodes"
+                rows="6"
+                aria-label="Node coordinates"
+              ></textarea>
+              <div class="actions">
+                <button id="applyNodes">Apply nodes</button
+                ><button id="cancelNodes">Close node editor</button>
+              </div>
+            </div>
+            <div class="actions">
+              <label
+                >Selected fill<input
+                  id="shapeColor"
+                  type="color"
+                  value="#315d45" /></label
+              ><label
+                >Opacity<input
+                  id="shapeOpacity"
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.05"
+                  value="1"
+              /></label>
+            </div>
+            <div class="export">
+              <label
+                >Save as<select id="format">
+                  <option value="svg">SVG · editable vector</option>
+                  <option value="pdf">PDF · print & sharing</option>
+                  <option value="eps">EPS · design software</option>
+                  <option value="png">PNG · raster preview</option>
+                  <option value="dxf">DXF · CAD curves or polylines</option>
+                  <option value="ai">AI · PDF-compatible vector</option>
+                </select></label
+              ><button id="save" class="primary">Download selected</button
+              ><button id="saveAll">Download all</button>
+            </div>
+            <details>
+              <summary>Export settings</summary>
+              <label
+                >Print resolution (DPI)<input
+                  id="dpi"
+                  type="number"
+                  min="24"
+                  max="1200"
+                  value="96" /></label
+              ><label
+                >Width in millimeters (optional)<input
+                  id="width_mm"
+                  type="number"
+                  min="1"
+                  max="5000"
+                  placeholder="Source pixel size" /></label
+              ><label
+                >PDF color space<select id="color_space">
+                  <option value="rgb">RGB</option>
+                  <option value="cmyk">Generic CMYK (no press profile)</option>
+                </select></label
+              ><label
+                >DXF geometry<select id="dxf_mode">
+                  <option value="spline">
+                    Lines, circular arcs and cubic splines
+                  </option>
+                  <option value="polyline">Polylines for basic cutters</option>
+                </select></label
+              ><label class="check"
+                ><input id="outlineExport" type="checkbox" /> Cutting outlines
+                only</label
+              >
+            </details>
+            <small
+              >AI export is PDF-compatible artwork, without Illustrator-native
+              editing metadata. EPS does not preserve opacity. Generic CMYK
+              requires print-proofing. DXF uses 1 unit = 1 pixel, or millimeters
+              when a width is specified, with no fills. Check scale and paths in
+              your cutting software.</small
+            >
+          </section>
+        </article>
+      </section>
+      <footer>
+        Free & open source · No account, tracking, GPU or internet required
+        after installation.<br />Animated images use the first frame. Projects
+        autosave in this browser on this computer; save a project file to keep a
+        portable copy.
+      </footer>
+    </main>
+  </body>
+</html>
