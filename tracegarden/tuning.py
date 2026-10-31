@@ -2,6 +2,7 @@
 
 from contextlib import contextmanager
 from contextvars import ContextVar
+from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -22,6 +23,9 @@ class Tuning(BaseModel):
     photo_flat_fraction: float = Field(0.35, ge=0.1, le=0.95)
     photo_cluster_min: int = Field(24, ge=4, le=64)
     photo_mass_limit: float = Field(0.9, ge=0.5, le=1)
+    region_merge_threshold: float = Field(0, ge=0, le=100_000)
+    region_seed_colors: int = Field(128, ge=2, le=256)
+    region_merge_mode: Literal["area", "ms"] = "area"
 
 
 _DEFAULT = Tuning()

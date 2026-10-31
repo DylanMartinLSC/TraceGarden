@@ -136,6 +136,7 @@ def trace(data: bytes, options: Options) -> dict:
     del source, oriented
     image.thumbnail((effective_size, effective_size), Image.Resampling.LANCZOS)
     reference_image = image.copy()
+    explicit_palette = bool(options.palette)
     automatic_layout = options.layering == "auto" or (
         options.preset == "auto" and "layering" not in options.model_fields_set
     )
@@ -193,7 +194,32 @@ def trace(data: bytes, options: Options) -> dict:
         rgb = rgb.filter(ImageFilter.MedianFilter(3))
     fitting_reference = rgb.convert("RGBA")
     fitting_reference.putalpha(alpha)
-    if options.preset in {"ink", "centerline"}:
+    from .tuning import current
+
+    region_image = None
+    tuning = current()
+    if tuning.region_merge_threshold > 0:
+        if (
+            options.preset in {"logo", "illustration", "photo"}
+            and not explicit_palette
+            and alpha.getextrema() == (255, 255)
+        ):
+            from .regions import merge_regions
+
+            region_image, analysis["region_merging"] = merge_regions(
+                rgb,
+                tuning.region_merge_threshold,
+                tuning.region_seed_colors,
+                tuning.region_merge_mode,
+            )
+        else:
+            analysis["region_merging"] = {
+                "applied": False,
+                "reason": "requires opaque color artwork without an explicit palette",
+            }
+    if region_image is not None:
+        rgb = region_image
+    elif options.preset in {"ink", "centerline"}:
         rgb = (
             rgb.convert("L")
             .point(lambda p: 255 if p >= options.threshold else 0)
