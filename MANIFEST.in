@@ -1,0 +1,9 @@
+prune experiments
+prune docs/experiments
+exclude benchmarks/paper_details.py
+exclude benchmarks/reference_appearance.py
+exclude tests/test_experiments.py
+exclude tests/test_paper_details.py
+exclude tests/test_reference_appearance.py
+exclude tests/test_references.py
+exclude tests/test_routing.py

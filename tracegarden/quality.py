@@ -1,4 +1,4 @@
-"""Versioned public quality profile, selected from the graph-seed experiments."""
+"""Versioned conversion quality profiles."""
 
 HIGH_TUNING = {
     "region_merge_threshold": 256.0,

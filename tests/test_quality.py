@@ -43,13 +43,29 @@ def test_cli_high_quality_batch(tmp_path):
     )
 
 
-def test_high_reproduces_published_candidate_and_restores_context():
-    candidate = json.loads(
-        Path("docs/experiments/graphseeds/raw-fidelity-finalist.json").read_text()
-    )
+def test_high_profile_and_context_isolation():
     before = current()
-    with experimental_tuning(candidate["tuning"]):
-        expected = trace(fixture_image(), Options(**candidate["options"]))
+    with experimental_tuning(
+        {
+            "region_merge_threshold": 256,
+            "region_seed_colors": 128,
+            "region_merge_mode": "ms",
+            "region_seed_scale": 20,
+            "region_seed_sigma": 0.5,
+        }
+    ):
+        expected = trace(
+            fixture_image(),
+            Options(
+                preset="auto",
+                layering="auto",
+                geometry=True,
+                gradients=True,
+                speckle=0,
+                corner=45,
+                precision=6,
+            ),
+        )
     actual = trace(fixture_image(), Options(quality="high"))
     assert actual["svg"] == expected["svg"]
     assert actual["quality"]["status"] == "applied"

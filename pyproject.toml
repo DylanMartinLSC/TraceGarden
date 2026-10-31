@@ -20,7 +20,7 @@ tracegarden = "tracegarden.__main__:main"
 tracegarden = ["static/*"]
 
 [tool.setuptools.packages.find]
-include = ["tracegarden*", "experiments*"]
+include = ["tracegarden*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

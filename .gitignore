@@ -6,3 +6,14 @@ build/
 dist/
 work/
 *.spec
+
+# Local quality studies and their reports are private development material.
+/experiments/
+/docs/experiments/
+/benchmarks/paper_details.py
+/benchmarks/reference_appearance.py
+/tests/test_experiments.py
+/tests/test_paper_details.py
+/tests/test_reference_appearance.py
+/tests/test_references.py
+/tests/test_routing.py

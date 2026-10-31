@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: python -m pip install -e ".[dev]"
-      - name: Unit tests and isolated CPU experiment smoke tests
+      - name: Unit and integration tests
         run: python -m pytest -q
   browser:
     runs-on: ubuntu-latest
