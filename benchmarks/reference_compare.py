@@ -10,12 +10,16 @@ import hashlib
 import html
 import io
 import json
+import platform
 import re
+import threading
 import time
+from importlib.metadata import version
 from pathlib import Path
 import httpx
 import numpy as np
 import resvg_py
+import psutil
 from PIL import Image
 from tracegarden.core import trace, Options
 from parity_corpus import metrics
@@ -90,11 +94,27 @@ def main():
             / 255
         )
         source = np.asarray(im, dtype=float) / 255
+        process = psutil.Process()
+        baseline = process.memory_info().rss
+        peak = [baseline]
+        stop = threading.Event()
+
+        def sample_memory():
+            while not stop.wait(0.002):
+                peak[0] = max(peak[0], process.memory_info().rss)
+
+        monitor = threading.Thread(target=sample_memory, daemon=True)
+        monitor.start()
         started = time.perf_counter()
-        result = trace(
-            data, Options(preset="auto", layering="auto", geometry=True, speckle=1)
-        )
-        elapsed = time.perf_counter() - started
+        try:
+            result = trace(
+                data, Options(preset="auto", layering="auto", geometry=True, speckle=1)
+            )
+            elapsed = time.perf_counter() - started
+        finally:
+            peak[0] = max(peak[0], process.memory_info().rss)
+            stop.set()
+            monitor.join()
         actual = (
             np.asarray(
                 Image.open(
@@ -117,6 +137,8 @@ def main():
             **entry,
             "size": list(size),
             "seconds": round(elapsed, 4),
+            "process_peak_rss_mib": round(peak[0] / 1024**2, 2),
+            "process_rss_growth_mib": round((peak[0] - baseline) / 1024**2, 2),
             "paths": result["paths"],
             "svg_bytes": len(result["svg"].encode()),
             "reference_svg_bytes": len(reference.encode()),
@@ -132,6 +154,21 @@ def main():
         Path("benchmarks/reference-results.json").write_text(
             json.dumps(
                 {
+                    "environment": {
+                        "platform": platform.platform(),
+                        "python": platform.python_version(),
+                        "cpu": platform.processor(),
+                        "vtracer": version("vtracer"),
+                        "tracegarden": version("tracegarden"),
+                        "renderer": version("resvg-py"),
+                    },
+                    "options": {
+                        "preset": "auto",
+                        "layering": "auto",
+                        "geometry": True,
+                        "speckle": 1,
+                    },
+                    "memory_method": "Whole-process RSS sampled every 2ms during tracing. Includes interpreter, imported libraries and preceding benchmark images; growth is relative to each case's baseline, not isolated worker memory. Vendor timing and memory unavailable.",
                     "notes": "Publicly offered demo pairs only. No uploads, accounts, private artwork, model training or vendor assets redistributed. Error to vendor output measures agreement, not objective superiority; input error can reward preserving JPEG artifacts. Sample set is vendor-selected.",
                     "results": rows,
                 },

@@ -14,6 +14,7 @@ let cancelled = false,
   nodeMode = "nodes";
 let autosaveTimer = null,
   saveGeneration = 0,
+  brushPattern = null,
   brushActive = false,
   painting = false;
 
@@ -125,6 +126,9 @@ function queue() {
   $("convert").disabled = busy || !items.length;
   for (const id of ["files", "demo", "openProject", "recoverProject", "clear"])
     $(id).disabled = busy;
+  for (const id of ["brushToggle", "brushUndo"]) $(id).disabled = busy;
+  $("editBackground").disabled =
+    busy || !items[current]?.result?.background_preview;
   $("cancel").hidden = !busy;
   $("editor").classList.toggle("busy", busy);
 }
@@ -603,6 +607,7 @@ async function project() {
         initialSVG: item.result?.svg || null,
         result: item.result ? { ...item.result, svg: undefined } : null,
         options: item.options || null,
+        brushOriginal: item.brushOriginal || null,
       })),
     ),
   };
@@ -638,7 +643,7 @@ async function restore(doc) {
         !/^data:image\/(png|jpeg|webp|gif|bmp|tiff);base64,[A-Za-z0-9+/=]+$/.test(
           item.source,
         ) ||
-        item.source.length > 36 * 1024 * 1024
+        item.source.length > 134 * 1024 * 1024
       )
         throw Error("Invalid image in project.");
       const binary = atob(item.source.split(",")[1]);
@@ -668,6 +673,11 @@ async function restore(doc) {
         !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(item.result.preview)
       )
         throw Error("Invalid preview in project.");
+      if (
+        item.brushOriginal &&
+        !/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(item.brushOriginal)
+      )
+        throw Error("Invalid brush source in project.");
       const file = new File([blob], item.name, { type: blob.type });
       loaded.push({
         file,
@@ -678,6 +688,7 @@ async function restore(doc) {
         future: [],
         brushHistory: [],
         options: item.options,
+        brushOriginal: item.brushOriginal || null,
       });
     }
   } catch (error) {
@@ -717,12 +728,19 @@ async function setupBrush() {
   $("brushToggle").textContent = brushActive ? "Disable brush" : "Enable brush";
   if (!brushActive) return;
   const image = new Image();
-  image.src = items[current].url;
+  const item = items[current];
+  image.src = item.url;
   await image.decode();
+  if (items[current] !== item) return;
   const canvas = $("repairCanvas");
   canvas.width = image.naturalWidth;
   canvas.height = image.naturalHeight;
   canvas.getContext("2d").drawImage(image, 0, 0);
+  const original = new Image();
+  original.src = item.brushOriginal || item.url;
+  await original.decode();
+  if (items[current] !== item) return;
+  brushPattern = canvas.getContext("2d").createPattern(original, "no-repeat");
 }
 function brushPoint(event) {
   const rect = $("repairCanvas").getBoundingClientRect();
@@ -928,7 +946,10 @@ $("projectFile").onchange = async (event) => {
   try {
     const file = event.target.files[0];
     if (!file) return;
-    if (file.size > 60 * 1024 * 1024) throw Error("Project exceeds 60 MB.");
+    if (file.size > 512 * 1024 * 1024)
+      throw Error(
+        "Project exceeds 512 MB. Save large batches as separate projects.",
+      );
     await restore(JSON.parse(await file.text()));
   } catch (error) {
     status(error.message, true);
@@ -955,6 +976,39 @@ $("clear").onclick = async () => {
 };
 $("brushToggle").onclick = () =>
   setupBrush().catch((error) => status(error.message, true));
+$("editBackground").onclick = async () => {
+  const item = items[current],
+    result = item?.result;
+  if (!result?.background_preview) {
+    status("Choose automatic background removal and vectorize first.");
+    return;
+  }
+  try {
+    const image = new Image();
+    image.src = result.background_preview;
+    await image.decode();
+    if (items[current] !== item) return;
+    item.brushOriginal = result.preview;
+    const canvas = $("repairCanvas");
+    canvas.width = image.naturalWidth;
+    canvas.height = image.naturalHeight;
+    canvas.getContext("2d").drawImage(image, 0, 0);
+    $("background").value = "keep";
+    $("cropEnabled").checked = false;
+    $("rotation").value = "0";
+    $("flip").checked = false;
+    $("symmetry").value = "none";
+    await commitBrush();
+    brushActive = false;
+    await setupBrush();
+    $("brushMode").value = "restore";
+    status(
+      "Brush over pixels to keep them, or choose Remove. Vectorize again when finished.",
+    );
+  } catch (error) {
+    status(error.message, true);
+  }
+};
 $("repairCanvas").onpointerdown = (event) => {
   if (!brushActive || busy) return;
   painting = true;
@@ -965,7 +1019,11 @@ $("repairCanvas").onpointerdown = (event) => {
   canvas.setPointerCapture(event.pointerId);
   const context = canvas.getContext("2d"),
     [x, y] = brushPoint(event);
-  context.strokeStyle = $("brushColor").value;
+  const mode = $("brushMode").value;
+  context.globalCompositeOperation =
+    mode === "remove" ? "destination-out" : "source-over";
+  context.strokeStyle =
+    mode === "restore" && brushPattern ? brushPattern : $("brushColor").value;
   context.lineWidth = Number($("brushSize").value);
   context.lineCap = "round";
   context.lineJoin = "round";
@@ -997,6 +1055,7 @@ $("brushUndo").onclick = async () => {
   $("repairCanvas")
     .getContext("2d")
     .clearRect(0, 0, $("repairCanvas").width, $("repairCanvas").height);
+  $("repairCanvas").getContext("2d").globalCompositeOperation = "source-over";
   $("repairCanvas").getContext("2d").drawImage(image, 0, 0);
   await commitBrush();
 };

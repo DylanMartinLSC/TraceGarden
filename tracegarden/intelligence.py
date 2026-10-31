@@ -31,100 +31,147 @@ def analyze(image):
     import cv2
 
     sample = image.copy()
-    sample.thumbnail((160, 160))
+    sample.thumbnail((320, 320))
     rgb = sample.convert("RGB")
     values = np.asarray(rgb, dtype=np.uint8)
     # A low-strength bilateral pass rejects compression noise while retaining edges.
     clean = cv2.bilateralFilter(values, 5, 10, 2)
-    quant = Image.fromarray(clean).quantize(colors=64)
+    # Estimate palette from flat interiors, not the much larger population of
+    # blended edge pixels. Small real accents must survive automatic selection.
+    spread = cv2.dilate(clean, np.ones((3, 3), np.uint8)).astype(int) - cv2.erode(
+        clean, np.ones((3, 3), np.uint8)
+    ).astype(int)
+    interior = clean[spread.max(axis=2) < 24]
+    if len(interior) > clean.size // 30:
+        bins = interior.astype(np.int32) // 16
+        packed = bins[:, 0] * 256 + bins[:, 1] * 16 + bins[:, 2]
+        histogram = np.bincount(packed, minlength=4096)
+        sums = np.array(
+            [
+                np.bincount(packed, weights=interior[:, c], minlength=4096)
+                for c in range(3)
+            ]
+        ).T
+        seeds = []
+        seed_labs = []
+        for index in np.argsort(histogram)[::-1]:
+            if histogram[index] < max(2, len(interior) * 0.0001) or len(seeds) >= 64:
+                break
+            color = np.uint8(sums[index] / histogram[index])
+            lab = cv2.cvtColor(color.reshape(1, 1, 3), cv2.COLOR_RGB2LAB)[0, 0].astype(
+                float
+            )
+            if (
+                not seed_labs
+                or min(np.linalg.norm(lab - other) for other in seed_labs) > 12
+            ):
+                seeds.append(color)
+                seed_labs.append(lab)
+        core_palette = Image.new("P", (1, 1))
+        colors = np.asarray(seeds, dtype=np.uint8).ravel().tolist()
+        core_palette.putpalette(colors + colors[-3:] * ((768 - len(colors)) // 3))
+        quant = Image.fromarray(clean).quantize(
+            palette=core_palette, dither=Image.Dither.NONE
+        )
+    else:
+        quant = Image.fromarray(clean).quantize(colors=64)
     counts = np.bincount(np.asarray(quant).ravel(), minlength=256)
     palette = np.array(quant.getpalette(), dtype=np.uint8).reshape(-1, 3)
     indices = np.flatnonzero(counts)
     clusters = [
-        {"rgb": palette[i].astype(float), "weight": float(counts[i])} for i in indices
+        {"rgb": palette[i].astype(float), "weight": float(counts[i]), "members": [i]}
+        for i in indices
     ]
     top_mass = sum(sorted(counts, reverse=True)[:10]) / counts.sum()
-    if True:
-        while len(clusters) > 2:
-            rgb_array = np.array([c["rgb"] for c in clusters], np.uint8)
-            lab = (
-                cv2.cvtColor(rgb_array.reshape(1, -1, 3), cv2.COLOR_RGB2LAB)
-                .reshape(-1, 3)
-                .astype(float)
-            )
-            distances = ((lab[:, None] - lab[None, :]) ** 2).sum(axis=2)
-            np.fill_diagonal(distances, np.inf)
-            i, j = np.unravel_index(distances.argmin(), distances.shape)
-            if distances[i, j] > 12**2:
-                break
-            if i > j:
-                i, j = j, i
-            a, b = clusters[i], clusters[j]
-            weight = a["weight"] + b["weight"]
-            clusters[i] = {
-                "rgb": (a["rgb"] * a["weight"] + b["rgb"] * b["weight"]) / weight,
-                "weight": weight,
-            }
-            clusters.pop(j)
-        # Remove low-mass colors explainable as a blend between two large flat colors.
-        major = [c for c in clusters if c["weight"] > counts.sum() * 0.015]
-        selected = []
-        for c in clusters:
-            mixed = False
-            if c["weight"] < counts.sum() * 0.04:
-                for ai, aa in enumerate(major):
-                    for bb in major[ai + 1 :]:
-                        if aa is c or bb is c:
-                            continue
-                        d = bb["rgb"] - aa["rgb"]
-                        den = float(d @ d)
-                        if den < 900:
-                            continue
-                        t = float((c["rgb"] - aa["rgb"]) @ d / den)
-                        if (
-                            0.04 < t < 0.96
-                            and np.linalg.norm(aa["rgb"] + t * d - c["rgb"]) < 8
-                        ):
-                            mixed = True
-                            break
-                    if mixed:
-                        break
-            if not mixed and c["weight"] > counts.sum() * 0.001:
-                selected.append(c)
-        if len(selected) < 2:
-            selected = sorted(clusters, key=lambda c: -c["weight"])[:2]
-        colors = []
-        for c in selected:
-            color = np.clip(c["rgb"].round(), 0, 255).astype(int)
-            if color.min() > 245:
-                color[:] = 255
-            if color.max() < 8:
-                color[:] = 0
-            colors.append("#" + "".join(f"{v:02x}" for v in color))
-        merged_mass = (
-            sum(sorted([c["weight"] for c in clusters], reverse=True)[:10])
-            / counts.sum()
+    while len(clusters) > 2:
+        rgb_array = np.array([c["rgb"] for c in clusters], np.uint8)
+        lab = (
+            cv2.cvtColor(rgb_array.reshape(1, -1, 3), cv2.COLOR_RGB2LAB)
+            .reshape(-1, 3)
+            .astype(float)
         )
-        if len(clusters) > 24 and merged_mass < 0.9:
-            return {
-                "preset": "photo",
-                "colors": 64,
-                "palette": [],
-                "palette_error": 0,
-                "flat_color_mass": round(float(merged_mass), 4),
-            }
-        colors = list(dict.fromkeys(colors))
-        return {
-            "preset": "logo" if len(colors) <= 16 else "illustration",
-            "colors": max(2, len(colors)),
-            "palette": colors,
-            "palette_error": 0,
-            "flat_color_mass": round(float(top_mass), 4),
+        distances = ((lab[:, None] - lab[None, :]) ** 2).sum(axis=2)
+        np.fill_diagonal(distances, np.inf)
+        i, j = np.unravel_index(distances.argmin(), distances.shape)
+        if distances[i, j] > 12**2:
+            break
+        if i > j:
+            i, j = j, i
+        a, b = clusters[i], clusters[j]
+        weight = a["weight"] + b["weight"]
+        clusters[i] = {
+            "rgb": (a["rgb"] * a["weight"] + b["rgb"] * b["weight"]) / weight,
+            "weight": weight,
+            "members": a["members"] + b["members"],
         }
+        clusters.pop(j)
+    # Remove low-mass colors explainable as a blend between two large flat colors.
+    major = [c for c in clusters if c["weight"] > counts.sum() * 0.015]
+    selected = []
+    for c in clusters:
+        mixed = False
+        coherent = (
+            cv2.distanceTransform(
+                np.isin(np.asarray(quant), c["members"]).astype(np.uint8),
+                cv2.DIST_L2,
+                3,
+            ).max()
+            > 1.8
+        )
+        if c["weight"] < counts.sum() * 0.04 and not coherent:
+            for ai, aa in enumerate(major):
+                for bb in major[ai + 1 :]:
+                    if aa is c or bb is c:
+                        continue
+                    d = bb["rgb"] - aa["rgb"]
+                    den = float(d @ d)
+                    if den < 900:
+                        continue
+                    t = float((c["rgb"] - aa["rgb"]) @ d / den)
+                    if (
+                        0.04 < t < 0.96
+                        and np.linalg.norm(aa["rgb"] + t * d - c["rgb"]) < 8
+                    ):
+                        mixed = True
+                        break
+                if mixed:
+                    break
+        if not mixed and (
+            c["weight"] > counts.sum() * 0.001
+            or coherent
+            and c["weight"] > counts.sum() * 0.0001
+        ):
+            selected.append(c)
+    if len(selected) < 2:
+        selected = sorted(clusters, key=lambda c: -c["weight"])[:2]
+    colors = []
+    for c in selected:
+        color = np.clip(c["rgb"].round(), 0, 255).astype(int)
+        if color.min() > 245:
+            color[:] = 255
+        if color.max() < 8:
+            color[:] = 0
+        colors.append("#" + "".join(f"{v:02x}" for v in color))
+    merged_mass = (
+        sum(sorted([c["weight"] for c in clusters], reverse=True)[:10]) / counts.sum()
+    )
+    if (
+        len(clusters) > 24
+        and merged_mass < 0.9
+        and len(interior) / len(clean.reshape(-1, 3)) < 0.35
+    ):
+        return {
+            "preset": "photo",
+            "colors": 64,
+            "palette": [],
+            "palette_error": 0,
+            "flat_color_mass": round(float(merged_mass), 4),
+        }
+    colors = list(dict.fromkeys(colors))
     return {
-        "preset": "photo",
-        "colors": 64,
-        "palette": [],
+        "preset": "logo" if len(colors) <= 16 else "illustration",
+        "colors": max(2, len(colors)),
+        "palette": colors,
         "palette_error": 0,
         "flat_color_mass": round(float(top_mass), 4),
     }

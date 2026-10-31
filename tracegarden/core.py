@@ -62,6 +62,7 @@ class Options(BaseModel):
         "none", "auto", "horizontal", "vertical", "both", "rotational"
     ] = "none"
     symmetry_order: int = Field(2, ge=2, le=16)
+    normalize_repeats: bool = False
 
     @field_validator("palette")
     @classmethod
@@ -175,6 +176,13 @@ def trace(data: bytes, options: Options) -> dict:
         image, detected_symmetry = symmetry(
             image, options.symmetry, options.symmetry_order
         )
+    background_preview = None
+    if removed.get("pixels", 0):
+        prepared = io.BytesIO()
+        image.save(prepared, format="PNG")
+        background_preview = (
+            "data:image/png;base64," + base64.b64encode(prepared.getvalue()).decode()
+        )
     alpha = image.getchannel("A")
     rgb = Image.new("RGB", image.size, "white")
     # Preserve unassociated RGB for translucent artwork; avoid a white matte.
@@ -264,8 +272,20 @@ def trace(data: bytes, options: Options) -> dict:
         )
     if options.gradients and options.preset != "centerline":
         from .enhance import gradients
+        from .gradientfit import whole_linear_region
 
-        fitted_gradients = gradients(root, rgb)
+        whole = whole_linear_region(fitting_reference, options)
+        if whole:
+            root, fitted_gradients = whole
+            root.set("viewBox", f"0 0 {image.width} {image.height}")
+            root.set("role", "img")
+        else:
+            fitted_gradients = gradients(root, fitting_reference)
+    normalized_repeats = 0
+    if options.normalize_repeats and options.preset != "centerline":
+        from .repetition import normalize_repeats
+
+        normalized_repeats = normalize_repeats(root)
     if (
         sum(alpha.histogram()[1:255])
         and not full_alpha
@@ -293,7 +313,9 @@ def trace(data: bytes, options: Options) -> dict:
         "warnings": warnings,
         "analysis": analysis,
         "background": removed,
+        "background_preview": background_preview,
         "symmetry": detected_symmetry,
+        "repeats": normalized_repeats,
         "full_alpha": full_alpha,
         "antialias_modelled": antialias_modelled,
         "subpixel_pixels": subpixel_pixels,

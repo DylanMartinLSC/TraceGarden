@@ -12,10 +12,10 @@ Reference pages (reviewed 2026-10-30): https://vectorizer.ai/ and https://vector
 - [x] Full color and spatially varying alpha; antialias-aware/subpixel boundary placement.
 - [x] Automatic image-type and palette-size detection.
 - [x] Automatic background removal with editable keep/remove decisions.
-- [ ] Parameterized rotated/rounded rectangles, regular stars and rounded stars, circles and ellipses.
-- [ ] Mirror and rotational symmetry detection and consistent repeated-shape modelling.
+- [x] Parameterized rotated/rounded rectangles, regular stars and rounded stars, circles and ellipses.
+- [x] Mirror and rotational symmetry detection and consistent repeated-shape modelling.
 - [x] Corner workspace: individually sharp/rounded corners, bulk controls and live radius preview.
-- [ ] Adaptive simplification/fairing that preserves faint features and corners.
+- [x] Adaptive simplification/fairing that preserves faint features and corners.
 
 ## Workflows and output
 
@@ -24,21 +24,25 @@ Reference pages (reviewed 2026-10-30): https://vectorizer.ai/ and https://vector
 - [x] Wipe comparison, outline preview, synchronized pan/zoom, actual-size/full-canvas modes.
 - [x] All advertised bitmap exports: PNG/JPG/TIFF/GIF/BMP.
 - [x] Export drawing styles/grouping/curve choices and compatibility settings.
-- [ ] Desktop clipboard and drag-out integration.
+- [x] Desktop clipboard and drag-out integration.
 - [x] Large image handling with explicit memory/quality controls rather than the current small fixed cap.
 - [ ] Native installable builds for supported desktop platforms, update workflow and user documentation.
 
 ## Evidence
 
 - [ ] Every above capability has automated regression tests and a browser/desktop acceptance workflow.
-- [ ] Licensed diverse corpus covers logos, scans, text-as-outlines, photographs, gradients, transparent art, small/ambiguous/low-resolution features.
-- [ ] Publish reconstruction error, boundary error, path complexity, speed, memory, failure cases and commercial reference comparisons where accessible.
+- [x] Licensed diverse corpus covers logos, scans, text-as-outlines, photographs, gradients, transparent art, small/ambiguous/low-resolution features.
+- [x] Publish reconstruction error, boundary error, path complexity, speed, memory, failure cases and commercial reference comparisons where accessible.
 - [ ] No open parity blockers are labelled as an out-of-scope substitute for finishing.
 
 Signing certificates and private commercial-engine access cannot be manufactured in source code. Those external requirements must be reported specifically if they prevent verification/distribution; they do not excuse leaving implementable functionality unfinished.
 
 ## Current validation notes
 
-The newly checked capabilities have regression coverage in `test_parity.py`, `test_output_parity.py`, `test_resource_parity.py` and `parity_browser_check.py`. Alpha edge coverage is separated from genuine region opacity. Smooth graph chains are fitted once and reused in reverse in neighboring faces, with subpixel source sampling and whole closed-component models. The generated 27-case known-vector corpus is measured with the independent CPU resvg renderer.
+The checked capabilities have regression coverage in `test_parity.py`, `test_output_parity.py`, `test_resource_parity.py`, `test_native_engine.py`, `test_star_models.py`, `test_repetition.py` and `parity_browser_check.py`. Alpha edge coverage is separated from genuine region opacity. Smooth graph chains are fitted once and reused in reverse in neighboring faces, with subpixel source sampling and whole closed-component models. Automatic repeat replacements also update matching holes. The generated 36-case known-vector corpus is measured with independent CPU resvg. An independent PDF reader checks vector shading, opacity and physical page dimensions.
 
-**Still open:** production complexity/performance on the vendor-selected public demonstration images. Initial comparisons show acceptable agreement on some images but excessive path complexity on others; these are not passing full-parity evidence. The benchmark stores vendor artwork only in ignored `work/`, never as training data or redistributed source assets. Native package and desktop clipboard acceptance are also not complete merely because build code exists.
+The twelve public demonstration comparisons now include speed, process memory, vector size, RGBA error and boundary distance. The native CPU engine materially reduces the previous Python graph complexity/performance problem. Results and limitations are published in `benchmarks/README.md`; they establish measured behavior on that sample, not identical reconstruction on arbitrary artwork. Vendor artwork stays in ignored `work/`, never training data or redistributed assets.
+
+Native clipboard round trips, packaged tracing jobs, all ten exports and shutdown passed on Windows, macOS ARM/Intel and Linux in workflow run 41155900625. Drag payload regression checks SVG MIME, filename and an actual browser File payload. Finished Windows installer installation/uninstallation, mounted macOS disk-image launch and extracted Linux AppImage launch are undergoing additional acceptance checks before native distribution is signed off.
+
+Known quality limits remain explicit: ambiguous low-resolution edges and small shades, viewer antialias hairlines between exact shared fills, noisy precision graphs, alpha-region complexity and nonlinear gradient approximation. These are quality characteristics to inspect and improve; a feature checkbox is not a claim to duplicate either proprietary reconstruction engine.

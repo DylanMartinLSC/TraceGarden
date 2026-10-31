@@ -115,10 +115,15 @@
                 min="2"
                 max="16"
             /></label>
+            <label class="check"
+              ><input type="checkbox" id="normalize_repeats" /> Detect and align
+              repeated shapes automatically</label
+            >
             <label
               >Region layout<select id="layering">
                 <option value="auto">Automatic layout</option>
                 <option value="stacked">Stacked · hides edge seams</option>
+                <option value="native">Shared curves · fast CPU tracing</option>
                 <option value="smooth">
                   Shared smooth curves · aligned neighbors
                 </option>
@@ -129,8 +134,8 @@
               </select></label
             >
             <label class="check"
-              ><input id="geometry" type="checkbox" /> Reconstruct ellipses and
-              rectangles</label
+              ><input id="geometry" type="checkbox" checked /> Recognize
+              circles, ellipses, rounded rectangles and stars</label
             ><label class="check"
               ><input id="gradients" type="checkbox" /> Fit linear gradients
               where appropriate</label
@@ -314,6 +319,16 @@
               Changes affect the source for the next trace.
             </p>
             <div class="actions">
+              <button id="editBackground">Edit detected background</button>
+              <label
+                >Brush action<select id="brushMode">
+                  <option value="paint">Paint color</option>
+                  <option value="remove">Remove to transparency</option>
+                  <option value="restore">
+                    Keep / restore original pixels
+                  </option>
+                </select></label
+              >
               <label
                 >Brush color<input
                   type="color"

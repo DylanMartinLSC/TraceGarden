@@ -81,6 +81,54 @@ def test_auto_palette_background_and_mirror_analysis():
     assert rendered.getpixel((40, 30))[3] > 250
 
 
+def test_automatic_palette_keeps_small_coherent_accent():
+    from tracegarden.intelligence import analyze
+
+    image = Image.new("RGB", (512, 512), "white")
+    draw = ImageDraw.Draw(image)
+    draw.rectangle((30, 30, 480, 480), fill="#fcecd1")
+    draw.ellipse((180, 180, 210, 200), fill="#f16a92")
+    analysis = analyze(image)
+    target = np.array([241, 106, 146])
+    palette = [
+        np.array([int(c[i : i + 2], 16) for i in [1, 3, 5]])
+        for c in analysis["palette"]
+    ]
+    assert min(np.linalg.norm(c - target) for c in palette) < 10
+    assert analysis["colors"] <= 5
+
+
+def test_rotational_symmetry_detection_preserves_four_lobes():
+    from tracegarden.intelligence import symmetry
+
+    image = Image.new("RGBA", (128, 128), "white")
+    draw = ImageDraw.Draw(image)
+    for x, y in [(24, 24), (88, 24), (24, 88), (88, 88)]:
+        draw.ellipse((x, y, x + 15, y + 15), fill="#123456")
+    output, detected = symmetry(image, "auto")
+    assert "rotation-4" in detected
+    pixels = np.asarray(output)
+    assert np.array_equal(pixels, np.rot90(pixels))
+    assert np.array_equal(pixels, np.asarray(image))
+
+
+def test_adaptive_shared_fit_preserves_faint_square_and_thin_stroke():
+    import resvg_py
+
+    source = '<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="#eeeeee"/><path d="M48 48H208V208H48Z" fill="#dddddd"/><path d="M16 20H240" stroke="#888888" stroke-width="1.2"/></svg>'
+    result = trace(
+        resvg_py.svg_to_bytes(svg_string=source),
+        Options(layering="smooth", colors=4, geometry=True, speckle=0),
+    )
+    rendered = Image.open(io.BytesIO(export(result["svg"], "png"))).convert("RGB")
+    assert rendered.getpixel((100, 100))[0] <= 223
+    assert rendered.getpixel((20, 100))[0] >= 236
+    assert rendered.getpixel((100, 20))[0] < 190
+    paths = validate_svg(result["svg"]).findall(NS + "path")
+    square = next(p for p in paths if p.get("fill").lower() == "#dddddd")
+    assert abs(polygon(square).area - 160**2) < 0.01
+
+
 def test_parametric_rotated_rounded_star_and_corner_controls():
     from tracegarden.modeling import shape_path, corner_data
     from tracegarden.svgdoc import EditRequest, edit_vector

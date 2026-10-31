@@ -2,6 +2,7 @@
 const originalConfig = config;
 config = function () {
   const value = originalConfig();
+  value.normalize_repeats = $("normalize_repeats").checked;
   for (const id of ["background", "background_color", "symmetry"])
     value[id] = $(id).value;
   for (const id of [
@@ -256,6 +257,10 @@ $("dragVector").ondragstart = (event) => {
   );
   event.dataTransfer.setData("DownloadURL", `image/svg+xml:${name}:${url}`);
   event.dataTransfer.setData("image/svg+xml", items[current].svg);
+  event.dataTransfer.setData("text/plain", items[current].svg);
+  event.dataTransfer.items.add(
+    new File([items[current].svg], name, { type: "image/svg+xml" }),
+  );
   setTimeout(() => URL.revokeObjectURL(url), 60000);
 };
 render();

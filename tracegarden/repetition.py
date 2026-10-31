@@ -106,3 +106,75 @@ def apply_repeats(paths, indices):
         )
         paths[index].set("d", path.d() + " Z")
         paths[index].attrib.pop("transform", None)
+
+
+def normalize_repeats(root, threshold=0.012):
+    """Find repeat families, preserving any matching neighboring hole contours.
+
+    Descriptor screening bounds the expensive cyclic alignment search. Each
+    accepted family uses one vector model with independent rigid transforms.
+    """
+    from scipy.spatial import cKDTree
+    from .svgdoc import NS
+    from .engine import _key
+
+    paths = root.findall(NS + "path")
+    if len(paths) > 1000:
+        return 0
+    candidates = []
+    descriptors = []
+    for index, el in enumerate(paths):
+        path = absolute_path(el)
+        if len(path) > 80 or len(path.continuous_subpaths()) != 1:
+            continue
+        item = normalized(el)
+        if item is None:
+            continue
+        points, center, scale = item
+        radii = np.linalg.norm(points, axis=1)
+        descriptors.append(np.quantile(radii, [0, 0.15, 0.3, 0.5, 0.7, 0.85, 1]))
+        candidates.append((index, item, path))
+    if len(candidates) < 2:
+        return 0
+    tree = cKDTree(descriptors)
+    used = set()
+    replacements = {}
+    count = 0
+    for i, (index, (points, center, scale), path) in enumerate(candidates):
+        if i in used:
+            continue
+        for j in tree.query_ball_point(descriptors[i], 0.045):
+            if j <= i or j in used:
+                continue
+            other_index, (other, target, target_scale), other_path = candidates[j]
+            error, rotation = align(points, other)
+            if rotation is None or error > threshold:
+                continue
+            angle = math.degrees(math.atan2(rotation[0, 1], rotation[0, 0]))
+            model = (
+                path.translated(-center)
+                .scaled(target_scale / scale, origin=0j)
+                .rotated(angle, origin=0j)
+                .translated(target)
+            )
+            # Bound actual displacement too: the same normalized tolerance must
+            # not allow a large motif to move many visible source pixels.
+            if error * target_scale > 0.6:
+                continue
+            replacements[_key(other_path)] = (other_path.area(), model)
+            used.add(j)
+            count += 1
+    for el in paths:
+        changed = False
+        subs = []
+        for sub in absolute_path(el).continuous_subpaths():
+            match = replacements.get(_key(sub))
+            if match:
+                direction, model = match
+                sub = model if direction * sub.area() >= 0 else model.reversed()
+                changed = True
+            subs.append(sub)
+        if changed:
+            el.set("d", " ".join(s.d() + (" Z" if s.isclosed() else "") for s in subs))
+            el.attrib.pop("transform", None)
+    return count

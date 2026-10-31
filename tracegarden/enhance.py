@@ -138,6 +138,11 @@ def gradients(root, image):
     scale = min(1, 256 / max(w, h))
     sw, sh = max(1, round(w * scale)), max(1, round(h * scale))
     small = cv2.resize(rgb, (sw, sh), interpolation=cv2.INTER_AREA).astype(float)
+    alpha = cv2.resize(
+        np.asarray(image.convert("RGBA"))[:, :, 3],
+        (sw, sh),
+        interpolation=cv2.INTER_NEAREST,
+    )
     owner = np.full((sh, sw), -1, np.int32)
     for i, el in enumerate(paths):
         mask = np.zeros((sh, sw), np.uint8)
@@ -152,7 +157,10 @@ def gradients(root, image):
     defs = ET.Element(NS + "defs")
     count = 0
     for i, el in enumerate(paths):
-        yy, xx = np.where(owner == i)
+        interior = (
+            cv2.erode((owner == i).astype(np.uint8), np.ones((3, 3), np.uint8)) > 0
+        )
+        yy, xx = np.where(interior & (alpha > 250))
         if len(xx) < 50:
             continue
         sample = small[yy, xx]

@@ -17,7 +17,7 @@ if __name__ == "__main__":
     try:
         for _ in range(200):
             try:
-                if client.get("/").status_code == 200:
+                if client.get("/", timeout=2).status_code == 200:
                     break
             except httpx.HTTPError:
                 pass
@@ -26,11 +26,13 @@ if __name__ == "__main__":
             time.sleep(0.1)
         else:
             raise RuntimeError("Packaged app did not start")
+        print("Packaged server started", flush=True)
         im = Image.new("RGB", (128, 128), "white")
         ImageDraw.Draw(im).rectangle((20, 20, 100, 100), fill="red")
         buffer = io.BytesIO()
         im.save(buffer, format="PNG")
         for options in [
+            {"preset": "auto", "layering": "native", "geometry": True},
             {"layering": "smooth", "geometry": True},
             {"preset": "centerline"},
         ]:
@@ -40,13 +42,15 @@ if __name__ == "__main__":
                 data={"options": json.dumps(options)},
             )
             assert r.status_code == 202, r.text
+            print("Queued", options, flush=True)
             ident = r.json()["id"]
             for _ in range(300):
-                job = client.get("/api/jobs/" + ident).json()
+                job = client.get("/api/jobs/" + ident, timeout=5).json()
                 if job["state"] in {"complete", "failed"}:
                     break
                 time.sleep(0.1)
             assert job["state"] == "complete", job
+            print("Completed", options, flush=True)
             for fmt in [
                 "svg",
                 "pdf",
@@ -64,6 +68,7 @@ if __name__ == "__main__":
                 )
                 assert r.status_code == 200, (fmt, r.text)
                 assert len(r.content) > 30
+                print("Exported", fmt, flush=True)
             client.delete("/api/jobs/" + ident)
         assert client.post("/api/shutdown").status_code == 200
         process.wait(timeout=15)

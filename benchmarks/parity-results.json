@@ -7,41 +7,41 @@
       "case": "circle",
       "size": 64,
       "mae_rgba_premultiplied": 0.00083,
-      "boundary_mean_px": 0.0264,
+      "boundary_mean_px": 0.0308,
       "paths": 1,
       "segments": 2,
       "svg_bytes": 281,
-      "seconds": 0.0722
+      "seconds": 0.0753
     },
     {
       "case": "ellipse",
       "size": 64,
       "mae_rgba_premultiplied": 0.001237,
-      "boundary_mean_px": 0.04,
+      "boundary_mean_px": 0.0274,
       "paths": 1,
       "segments": 2,
       "svg_bytes": 281,
-      "seconds": 0.0106
+      "seconds": 0.0091
     },
     {
       "case": "rounded-rectangle",
       "size": 64,
       "mae_rgba_premultiplied": 0.002507,
-      "boundary_mean_px": 0.092,
+      "boundary_mean_px": 0.0738,
       "paths": 1,
       "segments": 11,
       "svg_bytes": 286,
-      "seconds": 0.0125
+      "seconds": 0.0127
     },
     {
       "case": "star",
       "size": 64,
-      "mae_rgba_premultiplied": 0.00346,
-      "boundary_mean_px": 0.1045,
+      "mae_rgba_premultiplied": 0.00337,
+      "boundary_mean_px": 0.074,
       "paths": 1,
-      "segments": 37,
-      "svg_bytes": 785,
-      "seconds": 0.0116
+      "segments": 20,
+      "svg_bytes": 807,
+      "seconds": 0.374
     },
     {
       "case": "thin-feature",
@@ -61,7 +61,7 @@
       "paths": 1,
       "segments": 12,
       "svg_bytes": 290,
-      "seconds": 0.0038
+      "seconds": 0.0049
     },
     {
       "case": "adjacent-regions",
@@ -71,7 +71,7 @@
       "paths": 2,
       "segments": 38,
       "svg_bytes": 894,
-      "seconds": 0.0076
+      "seconds": 0.0075
     },
     {
       "case": "opacity-bands",
@@ -81,7 +81,7 @@
       "paths": 16,
       "segments": 64,
       "svg_bytes": 1908,
-      "seconds": 0.0099
+      "seconds": 0.01
     },
     {
       "case": "faint-corner",
@@ -91,47 +91,77 @@
       "paths": 2,
       "segments": 12,
       "svg_bytes": 345,
-      "seconds": 0.0039
+      "seconds": 0.004
+    },
+    {
+      "case": "text-outlines",
+      "size": 64,
+      "mae_rgba_premultiplied": 0.001275,
+      "boundary_mean_px": 0.0103,
+      "paths": 2,
+      "segments": 60,
+      "svg_bytes": 765,
+      "seconds": 0.0078
+    },
+    {
+      "case": "scan-lines",
+      "size": 64,
+      "mae_rgba_premultiplied": 0.001092,
+      "boundary_mean_px": 0.0151,
+      "paths": 3,
+      "segments": 290,
+      "svg_bytes": 3137,
+      "seconds": 0.0236
+    },
+    {
+      "case": "gradient",
+      "size": 64,
+      "mae_rgba_premultiplied": 0.013166,
+      "boundary_mean_px": 0.3091,
+      "paths": 1,
+      "segments": 17,
+      "svg_bytes": 633,
+      "seconds": 0.0222
     },
     {
       "case": "circle",
       "size": 128,
       "mae_rgba_premultiplied": 0.000698,
-      "boundary_mean_px": 0.0614,
+      "boundary_mean_px": 0.0513,
       "paths": 1,
       "segments": 2,
       "svg_bytes": 286,
-      "seconds": 0.0233
+      "seconds": 0.0207
     },
     {
       "case": "ellipse",
       "size": 128,
       "mae_rgba_premultiplied": 0.000734,
-      "boundary_mean_px": 0.0503,
+      "boundary_mean_px": 0.0481,
       "paths": 1,
       "segments": 2,
       "svg_bytes": 287,
-      "seconds": 0.0215
+      "seconds": 0.0199
     },
     {
       "case": "rounded-rectangle",
       "size": 128,
       "mae_rgba_premultiplied": 0.002114,
-      "boundary_mean_px": 0.1571,
+      "boundary_mean_px": 0.1365,
       "paths": 1,
       "segments": 8,
       "svg_bytes": 454,
-      "seconds": 0.0244
+      "seconds": 0.0212
     },
     {
       "case": "star",
       "size": 128,
-      "mae_rgba_premultiplied": 0.001433,
-      "boundary_mean_px": 0.0666,
+      "mae_rgba_premultiplied": 0.003662,
+      "boundary_mean_px": 0.1419,
       "paths": 1,
-      "segments": 16,
-      "svg_bytes": 315,
-      "seconds": 0.0262
+      "segments": 20,
+      "svg_bytes": 784,
+      "seconds": 0.2874
     },
     {
       "case": "thin-feature",
@@ -141,7 +171,7 @@
       "paths": 4,
       "segments": 32,
       "svg_bytes": 757,
-      "seconds": 0.0115
+      "seconds": 0.013
     },
     {
       "case": "nested-holes",
@@ -151,17 +181,17 @@
       "paths": 1,
       "segments": 12,
       "svg_bytes": 304,
-      "seconds": 0.0104
+      "seconds": 0.0098
     },
     {
       "case": "adjacent-regions",
       "size": 128,
       "mae_rgba_premultiplied": 0.000845,
-      "boundary_mean_px": 0.0185,
+      "boundary_mean_px": 0.0259,
       "paths": 2,
       "segments": 38,
       "svg_bytes": 1164,
-      "seconds": 0.0193
+      "seconds": 0.017
     },
     {
       "case": "opacity-bands",
@@ -171,7 +201,7 @@
       "paths": 16,
       "segments": 64,
       "svg_bytes": 1982,
-      "seconds": 0.0204
+      "seconds": 0.0192
     },
     {
       "case": "faint-corner",
@@ -181,47 +211,77 @@
       "paths": 2,
       "segments": 12,
       "svg_bytes": 362,
-      "seconds": 0.0114
+      "seconds": 0.0105
+    },
+    {
+      "case": "text-outlines",
+      "size": 128,
+      "mae_rgba_premultiplied": 0.0,
+      "boundary_mean_px": 0.0,
+      "paths": 2,
+      "segments": 60,
+      "svg_bytes": 786,
+      "seconds": 0.0151
+    },
+    {
+      "case": "scan-lines",
+      "size": 128,
+      "mae_rgba_premultiplied": 0.00084,
+      "boundary_mean_px": 0.0081,
+      "paths": 4,
+      "segments": 632,
+      "svg_bytes": 7597,
+      "seconds": 0.0494
+    },
+    {
+      "case": "gradient",
+      "size": 128,
+      "mae_rgba_premultiplied": 0.007172,
+      "boundary_mean_px": 0.3304,
+      "paths": 1,
+      "segments": 23,
+      "svg_bytes": 764,
+      "seconds": 0.0469
     },
     {
       "case": "circle",
       "size": 256,
       "mae_rgba_premultiplied": 0.000458,
-      "boundary_mean_px": 0.0809,
+      "boundary_mean_px": 0.0724,
       "paths": 1,
       "segments": 2,
       "svg_bytes": 288,
-      "seconds": 0.0583
+      "seconds": 0.0549
     },
     {
       "case": "ellipse",
       "size": 256,
       "mae_rgba_premultiplied": 0.000398,
-      "boundary_mean_px": 0.0661,
+      "boundary_mean_px": 0.0474,
       "paths": 1,
       "segments": 2,
       "svg_bytes": 292,
-      "seconds": 0.0543
+      "seconds": 0.0641
     },
     {
       "case": "rounded-rectangle",
       "size": 256,
       "mae_rgba_premultiplied": 0.000616,
-      "boundary_mean_px": 0.0833,
+      "boundary_mean_px": 0.0707,
       "paths": 1,
       "segments": 19,
       "svg_bytes": 491,
-      "seconds": 0.0582
+      "seconds": 0.062
     },
     {
       "case": "star",
       "size": 256,
       "mae_rgba_premultiplied": 0.00071,
-      "boundary_mean_px": 0.0623,
+      "boundary_mean_px": 0.0576,
       "paths": 1,
       "segments": 16,
       "svg_bytes": 332,
-      "seconds": 0.0628
+      "seconds": 0.2832
     },
     {
       "case": "thin-feature",
@@ -231,7 +291,7 @@
       "paths": 1,
       "segments": 12,
       "svg_bytes": 300,
-      "seconds": 0.0363
+      "seconds": 0.035
     },
     {
       "case": "nested-holes",
@@ -241,17 +301,17 @@
       "paths": 1,
       "segments": 12,
       "svg_bytes": 313,
-      "seconds": 0.0384
+      "seconds": 0.0345
     },
     {
       "case": "adjacent-regions",
       "size": 256,
       "mae_rgba_premultiplied": 0.000428,
-      "boundary_mean_px": 0.0226,
+      "boundary_mean_px": 0.0184,
       "paths": 2,
       "segments": 52,
       "svg_bytes": 2116,
-      "seconds": 0.0512
+      "seconds": 0.0505
     },
     {
       "case": "opacity-bands",
@@ -261,7 +321,7 @@
       "paths": 16,
       "segments": 64,
       "svg_bytes": 2018,
-      "seconds": 0.0693
+      "seconds": 0.0662
     },
     {
       "case": "faint-corner",
@@ -271,7 +331,37 @@
       "paths": 2,
       "segments": 12,
       "svg_bytes": 362,
-      "seconds": 0.0467
+      "seconds": 0.0395
+    },
+    {
+      "case": "text-outlines",
+      "size": 256,
+      "mae_rgba_premultiplied": 0.0,
+      "boundary_mean_px": 0.0,
+      "paths": 2,
+      "segments": 60,
+      "svg_bytes": 856,
+      "seconds": 0.0551
+    },
+    {
+      "case": "scan-lines",
+      "size": 256,
+      "mae_rgba_premultiplied": 0.000485,
+      "boundary_mean_px": 0.0133,
+      "paths": 4,
+      "segments": 1008,
+      "svg_bytes": 12721,
+      "seconds": 0.144
+    },
+    {
+      "case": "gradient",
+      "size": 256,
+      "mae_rgba_premultiplied": 0.003442,
+      "boundary_mean_px": 0.398,
+      "paths": 1,
+      "segments": 14,
+      "svg_bytes": 1481,
+      "seconds": 0.1312
     }
   ]
 }

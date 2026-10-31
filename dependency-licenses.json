@@ -234,6 +234,12 @@
     "homepage": null
   },
   {
+    "name": "pypdf",
+    "version": "6.21.4",
+    "license": "BSD-3-Clause",
+    "homepage": null
+  },
+  {
     "name": "pytest",
     "version": "9.2.0",
     "license": "MIT",

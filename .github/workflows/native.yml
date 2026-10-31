@@ -25,12 +25,15 @@ jobs:
           xvfb-run -a python scripts/check_clipboard.py
       - run: python scripts/package_native.py
       - name: Smoke test Windows
+        timeout-minutes: 8
         if: runner.os == 'Windows'
         run: python scripts/smoke_native.py dist/TraceGarden/TraceGarden.exe
       - name: Smoke test macOS
+        timeout-minutes: 8
         if: runner.os == 'macOS'
         run: python scripts/smoke_native.py dist/TraceGarden.app/Contents/MacOS/TraceGarden
       - name: Smoke test Linux
+        timeout-minutes: 8
         if: runner.os == 'Linux'
         run: python scripts/smoke_native.py dist/TraceGarden/TraceGarden
       - name: Windows installer
@@ -42,6 +45,18 @@ jobs:
           & $compiler packaging/windows.iss
           if ($LASTEXITCODE) { throw 'Installer compilation failed' }
           Compress-Archive dist/TraceGarden dist/TraceGarden-Windows-portable.zip
+      - name: Windows install, launch and uninstall acceptance
+        if: runner.os == 'Windows'
+        timeout-minutes: 10
+        shell: pwsh
+        run: |
+          $installProbe = Join-Path $env:RUNNER_TEMP 'TraceGarden-install-check'
+          $installResult = Start-Process -FilePath 'dist/TraceGarden-Windows-Setup.exe' -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', "/DIR=$installProbe") -Wait -PassThru -WindowStyle Hidden
+          if ($installResult.ExitCode) { throw 'Silent installation failed' }
+          python scripts/smoke_native.py "$installProbe/TraceGarden.exe"
+          if ($LASTEXITCODE) { throw 'Installed application failed' }
+          $uninstallResult = Start-Process -FilePath "$installProbe/unins000.exe" -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') -Wait -PassThru -WindowStyle Hidden
+          if ($uninstallResult.ExitCode) { throw 'Uninstall failed' }
       - name: macOS disk image
         if: runner.os == 'macOS'
         run: |
@@ -49,6 +64,14 @@ jobs:
           cp -R dist/TraceGarden.app dist/dmg/
           ln -s /Applications dist/dmg/Applications
           hdiutil create -volname TraceGarden -srcfolder dist/dmg -ov -format UDZO "dist/TraceGarden-macOS-$(uname -m).dmg"
+      - name: macOS disk image launch acceptance
+        if: runner.os == 'macOS'
+        timeout-minutes: 8
+        run: |
+          mkdir -p "$RUNNER_TEMP/TraceGardenDMG"
+          hdiutil attach "dist/TraceGarden-macOS-$(uname -m).dmg" -nobrowse -mountpoint "$RUNNER_TEMP/TraceGardenDMG"
+          python scripts/smoke_native.py "$RUNNER_TEMP/TraceGardenDMG/TraceGarden.app/Contents/MacOS/TraceGarden"
+          hdiutil detach "$RUNNER_TEMP/TraceGardenDMG"
       - name: Linux AppImage
         if: runner.os == 'Linux'
         run: |
@@ -63,6 +86,15 @@ jobs:
           cd dist
           ./appimagetool.AppImage --appimage-extract
           ARCH=x86_64 ./squashfs-root/AppRun TraceGarden.AppDir TraceGarden-Linux-x86_64.AppImage
+      - name: Linux AppImage launch acceptance
+        if: runner.os == 'Linux'
+        timeout-minutes: 8
+        run: |
+          mkdir -p "$RUNNER_TEMP/TraceGardenAppImage"
+          cd "$RUNNER_TEMP/TraceGardenAppImage"
+          "$GITHUB_WORKSPACE/dist/TraceGarden-Linux-x86_64.AppImage" --appimage-extract
+          cd "$GITHUB_WORKSPACE"
+          python scripts/smoke_native.py "$RUNNER_TEMP/TraceGardenAppImage/squashfs-root/AppRun"
       - uses: actions/upload-artifact@v4
         with:
           name: TraceGarden-${{ matrix.os }}

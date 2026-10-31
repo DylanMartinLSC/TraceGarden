@@ -31,7 +31,9 @@ def main():
     batch.add_argument("images", nargs="+", type=Path)
     batch.add_argument("--output", type=Path, default=Path("vectors"))
     batch.add_argument(
-        "--format", choices=["svg", "pdf", "eps", "ai", "dxf", "png"], default="svg"
+        "--format",
+        choices=["svg", "pdf", "eps", "ai", "dxf", "png", "jpg", "gif", "bmp", "tiff"],
+        default="svg",
     )
     batch.add_argument(
         "--options", default="{}", help="Tracing options as a JSON object"
