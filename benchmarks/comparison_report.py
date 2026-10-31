@@ -1,6 +1,7 @@
 """Publish explicit paired metrics; build a private, offline visual gallery.
 
-No third-party artwork is committed. The HTML is generated from the ignored
+Raw input/reference artwork stays in the ignored cache. Published derived figures
+are attributed separately in docs/comparisons. The HTML is generated from that
 reference cache populated by reference_compare.py --download-public-examples.
 """
 
@@ -56,7 +57,7 @@ def markdown(report):
         (
             "Generate an offline gallery with original raster, Vectorizer.AI reference, and "
             "TraceGarden output shown together. It includes synchronized zoom/scroll and paired metrics. "
-            "Third-party artwork remains in the local cache and generated gallery, outside the published source."
+            "Raw source/reference files remain in the local cache. Attributed comparison charts are also available in [the README](../README.md#visual-comparisons)."
         ),
         "",
         "```sh",
