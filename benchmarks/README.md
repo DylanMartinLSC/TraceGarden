@@ -1,27 +1,31 @@
 # CPU, memory and reconstruction measurements
 
-## Current 0.3 development comparison
+## Output comparisons: Vectorizer.AI public references
+
+**Comparison scope:** 12 Vectorizer.AI public example outputs. **No Vector Magic Desktop comparison and no commercial speed/memory measurements have been performed.** All CPU/RSS timings below are TraceGarden-only. See the [explicit paired report and visual-gallery instructions](COMPARISONS.md).
 
 Twelve source/reference pairs are publicly advertised on [Vectorizer.AI](https://vectorizer.ai/). The benchmark downloads those exact public example URLs only when explicitly requested; cached artwork remains in ignored `work/`. No user uploads, accounts, model training or vendor artwork redistribution are involved. The sample set is vendor-selected and consists of illustrated artwork and logos.
 
 Both outputs are rendered by independent CPU resvg at the input dimensions. MAE compares premultiplied RGBA on a 0–1 scale. Boundary distance is the symmetric mean distance between silhouette/color-change pixels (threshold 0.025), in input pixels. These measure agreement with the example output; they do not prove identical quality, perceptual equivalence or superiority. Input error can reward retaining JPEG artifacts. Vendor timing/memory are unavailable.
 
-| Example | CPU seconds | SVG size / reference | RGBA MAE to reference | Boundary distance, px |
+| Example | Vectorizer.AI SVG bytes | TraceGarden SVG bytes | Vectorizer.AI input MAE | TraceGarden input MAE |
 |---|---:|---:|---:|---:|
-| bubble-tea | 0.237 | 2.85× | 0.0282 | 0.494 |
-| bull-mascot | 0.173 | 0.75× | 0.0054 | 0.165 |
-| cloud-computing | 0.113 | 0.79× | 0.0119 | 0.329 |
-| coffee-fox | 0.134 | 0.66× | 0.0091 | 0.150 |
-| coffee-shop | 0.253 | 0.69× | 0.0094 | 0.147 |
-| geometric-shapes | 0.105 | 1.53× | 0.0041 | 0.138 |
-| leaping-stag | 0.186 | 1.00× | 0.0102 | 0.196 |
-| lion-mascot | 0.199 | 0.62× | 0.0124 | 0.168 |
-| mountain-supply | 0.249 | 0.75× | 0.0103 | 0.182 |
-| national-park | 0.199 | 0.57× | 0.0088 | 0.151 |
-| seaside-panther | 0.405 | 2.59× | 0.0182 | 0.433 |
-| wolf-mascot | 0.149 | 0.83× | 0.0193 | 0.181 |
+| bubble-tea | 49,609 | 141,331 | 0.020646 | 0.027146 |
+| bull-mascot | 33,800 | 25,264 | 0.006746 | 0.009160 |
+| cloud-computing | 85,549 | 67,224 | 0.007480 | 0.015625 |
+| coffee-fox | 50,660 | 33,354 | 0.008876 | 0.010921 |
+| coffee-shop | 54,280 | 37,374 | 0.010994 | 0.014427 |
+| geometric-shapes | 8,225 | 12,597 | 0.004962 | 0.004688 |
+| leaping-stag | 110,293 | 110,364 | 0.007212 | 0.008906 |
+| lion-mascot | 42,154 | 26,017 | 0.008728 | 0.015909 |
+| mountain-supply | 51,169 | 38,145 | 0.018592 | 0.023033 |
+| national-park | 64,956 | 37,288 | 0.011462 | 0.015504 |
+| seaside-panther | 135,692 | 350,940 | 0.018680 | 0.023308 |
+| wolf-mascot | 139,587 | 116,082 | 0.014399 | 0.022783 |
 
-Median tracing time is 0.192 seconds; the largest measured whole-process RSS is 179.4 MiB. RSS includes Python, imports and preceding cases, sampled every 2ms during tracing. It is not isolated worker memory or a low-end-machine measurement. Settings, versions, source URLs and SHA-256 hashes are in [reference-results.json](reference-results.json).
+TraceGarden SVGs are smaller in 8 of 12 cases; the Vectorizer.AI references have lower input MAE in 11 of 12. Input MAE is not a perceptual quality score and does not establish parity.
+
+**TraceGarden-only performance:** Median tracing time is 0.192 seconds; the largest measured whole-process RSS is 179.4 MiB. RSS includes Python, imports and preceding cases, sampled every 2ms during tracing. It is not isolated worker memory or a low-end-machine measurement. Settings, versions, source URLs and SHA-256 hashes are in [reference-results.json](reference-results.json).
 
 A separate run restricted the same process to one logical CPU: median 0.191 seconds, slowest 0.359 seconds, peak whole-process RSS 178.7 MiB. This is one hardware thread on the same fast desktop, not a low-end CPU emulation. See [single-CPU results](reference-single-cpu-results.json); reproduce with `--one-cpu --output benchmarks/reference-single-cpu-results.json`.
 
