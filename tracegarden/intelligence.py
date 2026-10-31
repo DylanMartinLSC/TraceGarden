@@ -160,10 +160,15 @@ def analyze(image):
     merged_mass = (
         sum(sorted([c["weight"] for c in clusters], reverse=True)[:10]) / counts.sum()
     )
+    routing = {
+        "palette_clusters": len(clusters),
+        "merged_color_mass": round(float(merged_mass), 6),
+        "flat_interior_fraction": round(len(interior) / len(clean.reshape(-1, 3)), 6),
+    }
     if (
-        len(clusters) > 24
-        and merged_mass < 0.9
-        and len(interior) / len(clean.reshape(-1, 3)) < 0.35
+        len(clusters) > current().photo_cluster_min
+        and merged_mass < current().photo_mass_limit
+        and len(interior) / len(clean.reshape(-1, 3)) < current().photo_flat_fraction
     ):
         return {
             "preset": "photo",
@@ -171,6 +176,7 @@ def analyze(image):
             "palette": [],
             "palette_error": 0,
             "flat_color_mass": round(float(merged_mass), 4),
+            "routing_features": routing,
         }
     colors = list(dict.fromkeys(colors))
     return {
@@ -179,6 +185,7 @@ def analyze(image):
         "palette": colors,
         "palette_error": 0,
         "flat_color_mass": round(float(top_mass), 4),
+        "routing_features": routing,
     }
 
 

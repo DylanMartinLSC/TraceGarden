@@ -19,6 +19,9 @@ class Tuning(BaseModel):
     shared_tolerance_scale: float = Field(1, ge=0.25, le=2)
     primitive_tolerance_scale: float = Field(1, ge=0.25, le=2)
     gradient_mse_limit: float = Field(12, ge=2, le=30)
+    photo_flat_fraction: float = Field(0.35, ge=0.1, le=0.95)
+    photo_cluster_min: int = Field(24, ge=4, le=64)
+    photo_mass_limit: float = Field(0.9, ge=0.5, le=1)
 
 
 _DEFAULT = Tuning()
