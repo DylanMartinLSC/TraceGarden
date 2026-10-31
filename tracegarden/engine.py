@@ -8,9 +8,11 @@ import vtracer
 from svgpathtools import CubicBezier, Line, QuadraticBezier
 
 from .svgdoc import NS, absolute_path
+from .tuning import current
 
 
 def native_trace(image, options, shared=False):
+    tuning = current()
     config = vtracer.Config(
         hierarchical="cutout" if shared else options.layering,
         mode="pixel" if options.preset == "pixel" else "spline",
@@ -18,11 +20,11 @@ def native_trace(image, options, shared=False):
         color_precision=options.precision if options.preset == "photo" else 8,
         layer_difference=options.layer_difference if options.preset == "photo" else 0,
         corner_threshold=options.corner,
-        length_threshold=4.0,
-        max_iterations=10,
-        splice_threshold=45,
-        simplify=1.0 if options.preset != "pixel" else None,
-        path_precision=3,
+        length_threshold=tuning.length_threshold,
+        max_iterations=tuning.max_iterations,
+        splice_threshold=tuning.splice_threshold,
+        simplify=tuning.simplify if options.preset != "pixel" else None,
+        path_precision=tuning.path_precision,
         optimize=1,
     )
     return ET.fromstring(

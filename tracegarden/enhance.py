@@ -5,11 +5,13 @@ import math
 import xml.etree.ElementTree as ET
 import numpy as np
 from .svgdoc import NS, absolute_path, rings
+from .tuning import current
 
 
 def primitives(root, tolerance=0.8):
     import cv2
 
+    tolerance *= current().primitive_tolerance_scale
     count = 0
     for el in root.findall(NS + "path"):
         contours = rings(el, step=2)

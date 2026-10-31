@@ -5,6 +5,7 @@ from PIL import Image
 
 from .engine import native_trace
 from .svgdoc import NS
+from .tuning import current
 
 
 def whole_linear_region(reference, options):
@@ -39,7 +40,7 @@ def whole_linear_region(reference, options):
     errors = np.linalg.norm(design @ coefficients - values, axis=1)
     if (
         np.mean(values.var(axis=0)) < 120
-        or np.mean(errors**2) > 12
+        or np.mean(errors**2) > current().gradient_mse_limit
         or np.percentile(errors, 95) > 8
     ):
         return None

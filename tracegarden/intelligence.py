@@ -2,6 +2,7 @@
 
 import numpy as np
 from PIL import Image, ImageColor
+from .tuning import current
 
 
 def alpha_coverage(image):
@@ -13,7 +14,10 @@ def alpha_coverage(image):
     if not partial.any() or not (alpha == 255).any():
         return image, False
     distance = cv2.distanceTransform((alpha > 0).astype(np.uint8), cv2.DIST_L2, 3)
-    if partial.sum() > alpha.size * 0.2 or float(distance[partial].max()) > 2.2:
+    if (
+        partial.sum() > alpha.size * 0.2
+        or float(distance[partial].max()) > current().alpha_width
+    ):
         return image, False
     from scipy.ndimage import distance_transform_edt
 
@@ -35,7 +39,7 @@ def analyze(image):
     rgb = sample.convert("RGB")
     values = np.asarray(rgb, dtype=np.uint8)
     # A low-strength bilateral pass rejects compression noise while retaining edges.
-    clean = cv2.bilateralFilter(values, 5, 10, 2)
+    clean = cv2.bilateralFilter(values, 5, current().bilateral_sigma, 2)
     # Estimate palette from flat interiors, not the much larger population of
     # blended edge pixels. Small real accents must survive automatic selection.
     spread = cv2.dilate(clean, np.ones((3, 3), np.uint8)).astype(int) - cv2.erode(
@@ -63,7 +67,8 @@ def analyze(image):
             )
             if (
                 not seed_labs
-                or min(np.linalg.norm(lab - other) for other in seed_labs) > 12
+                or min(np.linalg.norm(lab - other) for other in seed_labs)
+                > current().palette_distance
             ):
                 seeds.append(color)
                 seed_labs.append(lab)
@@ -93,7 +98,7 @@ def analyze(image):
         distances = ((lab[:, None] - lab[None, :]) ** 2).sum(axis=2)
         np.fill_diagonal(distances, np.inf)
         i, j = np.unravel_index(distances.argmin(), distances.shape)
-        if distances[i, j] > 12**2:
+        if distances[i, j] > current().palette_distance**2:
             break
         if i > j:
             i, j = j, i

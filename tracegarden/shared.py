@@ -5,6 +5,7 @@ import math
 import numpy as np
 from svgpathtools import CubicBezier, Line, Path
 from .svgdoc import NS, absolute_path, NUMBER
+from .tuning import current
 
 
 def _unit(v):
@@ -97,6 +98,7 @@ def _corner_vertices(vertices, closed):
 
 
 def smooth_shared(root, tolerance=0.7, image=None):
+    tolerance *= current().shared_tolerance_scale
     rgba_source = None
     if image is not None:
         rgba_source = np.asarray(image.convert("RGBA"), dtype=np.float32)
