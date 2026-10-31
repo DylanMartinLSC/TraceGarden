@@ -4,24 +4,28 @@
 
 Twelve source/reference pairs are publicly advertised on [Vectorizer.AI](https://vectorizer.ai/). The benchmark downloads those exact public example URLs only when explicitly requested; cached artwork remains in ignored `work/`. No user uploads, accounts, model training or vendor artwork redistribution are involved. The sample set is vendor-selected and consists of illustrated artwork and logos.
 
-Both outputs are rendered by independent CPU resvg at the input dimensions. MAE compares premultiplied RGBA on a 0–1 scale. Boundary distance is the symmetric mean distance between silhouette/color-change pixels (threshold 0.025), in input pixels. These measure agreement with the example output; they do not prove identical quality, perceptual equivalence or superiority. Input error can reward retaining JPEG artifacts. Vendor timing/memory are unavailable.
+Both outputs are rendered by independent CPU resvg at the input dimensions. MAE compares premultiplied RGBA on a 0â€“1 scale. Boundary distance is the symmetric mean distance between silhouette/color-change pixels (threshold 0.025), in input pixels. These measure agreement with the example output; they do not prove identical quality, perceptual equivalence or superiority. Input error can reward retaining JPEG artifacts. Vendor timing/memory are unavailable.
 
 | Example | CPU seconds | SVG size / reference | RGBA MAE to reference | Boundary distance, px |
 |---|---:|---:|---:|---:|
-| bubble-tea | 0.237 | 2.85× | 0.0282 | 0.494 |
-| bull-mascot | 0.173 | 0.75× | 0.0054 | 0.165 |
-| cloud-computing | 0.113 | 0.79× | 0.0119 | 0.329 |
-| coffee-fox | 0.134 | 0.66× | 0.0091 | 0.150 |
-| coffee-shop | 0.253 | 0.69× | 0.0094 | 0.147 |
-| geometric-shapes | 0.105 | 1.53× | 0.0041 | 0.138 |
-| leaping-stag | 0.186 | 1.00× | 0.0102 | 0.196 |
-| lion-mascot | 0.199 | 0.62× | 0.0124 | 0.168 |
-| mountain-supply | 0.249 | 0.75× | 0.0103 | 0.182 |
-| national-park | 0.199 | 0.57× | 0.0088 | 0.151 |
-| seaside-panther | 0.405 | 2.59× | 0.0182 | 0.433 |
-| wolf-mascot | 0.149 | 0.83× | 0.0193 | 0.181 |
+| bubble-tea | 0.237 | 2.85Ã— | 0.0282 | 0.494 |
+| bull-mascot | 0.173 | 0.75Ã— | 0.0054 | 0.165 |
+| cloud-computing | 0.113 | 0.79Ã— | 0.0119 | 0.329 |
+| coffee-fox | 0.134 | 0.66Ã— | 0.0091 | 0.150 |
+| coffee-shop | 0.253 | 0.69Ã— | 0.0094 | 0.147 |
+| geometric-shapes | 0.105 | 1.53Ã— | 0.0041 | 0.138 |
+| leaping-stag | 0.186 | 1.00Ã— | 0.0102 | 0.196 |
+| lion-mascot | 0.199 | 0.62Ã— | 0.0124 | 0.168 |
+| mountain-supply | 0.249 | 0.75Ã— | 0.0103 | 0.182 |
+| national-park | 0.199 | 0.57Ã— | 0.0088 | 0.151 |
+| seaside-panther | 0.405 | 2.59Ã— | 0.0182 | 0.433 |
+| wolf-mascot | 0.149 | 0.83Ã— | 0.0193 | 0.181 |
 
 Median tracing time is 0.192 seconds; the largest measured whole-process RSS is 179.4 MiB. RSS includes Python, imports and preceding cases, sampled every 2ms during tracing. It is not isolated worker memory or a low-end-machine measurement. Settings, versions, source URLs and SHA-256 hashes are in [reference-results.json](reference-results.json).
+
+A separate run restricted the same process to one logical CPU: median 0.191 seconds, slowest 0.359 seconds, peak whole-process RSS 178.7 MiB. This is one hardware thread on the same fast desktop, not a low-end CPU emulation. See [single-CPU results](reference-single-cpu-results.json); reproduce with `--one-cpu --output benchmarks/reference-single-cpu-results.json`.
+
+The current public-domain NASA photograph workload uses three fresh spawned workers: 0.240 seconds median trace time, 1.192 seconds median total worker wall time, 116.4 MiB peak RSS, 814 paths and normalized RGB MAE 0.04627. [Raw 0.3 photo results](photograph-0.3-results.json) include settings and version information.
 
 ## Known-vector reconstruction corpus
 

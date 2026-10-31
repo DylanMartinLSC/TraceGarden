@@ -1,0 +1,26 @@
+{
+  "case": "NASA astronaut (Eileen Collins)",
+  "source": "https://scikit-image.org/docs/stable/api/skimage.data.html#skimage.data.astronaut",
+  "license": "Public domain, per scikit-image documentation",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "engine": "1.0.0a4",
+  "tracegarden": "0.3.0",
+  "size": [
+    512,
+    512
+  ],
+  "runs": 3,
+  "trace_median_s": 0.2396,
+  "process_wall_median_s": 1.1919,
+  "peak_rss_mib": 116.4,
+  "mae": 0.04627,
+  "paths": 814,
+  "svg_bytes": 218628,
+  "config": {
+    "preset": "photo",
+    "precision": 6,
+    "smooth": true,
+    "layer_difference": 48
+  },
+  "notes": "One natural photograph, three fresh CPU workers. Peak RSS sampled every 10ms includes quality rendering. No paid-service comparison; no claim that one photograph establishes general quality parity."
+}

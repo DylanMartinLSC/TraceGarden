@@ -1,12 +1,14 @@
 """Real-image benchmark using scikit-image's locally bundled NASA astronaut image."""
 
 import io
+import argparse
 import json
 import multiprocessing as mp
 import platform
 import statistics
 import time
 from pathlib import Path
+from importlib.metadata import version
 import psutil
 from PIL import Image
 import skimage
@@ -14,6 +16,11 @@ from studio import worker
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--output", type=Path, default=Path("benchmarks/photograph-results.json")
+    )
+    args = parser.parse_args()
     image = Image.open(
         Path(skimage.__file__).parent / "data" / "astronaut.png"
     ).convert("RGB")
@@ -58,6 +65,8 @@ if __name__ == "__main__":
         "source": "https://scikit-image.org/docs/stable/api/skimage.data.html#skimage.data.astronaut",
         "license": "Public domain, per scikit-image documentation",
         "platform": platform.platform(),
+        "engine": version("vtracer"),
+        "tracegarden": version("tracegarden"),
         "size": list(image.size),
         "runs": 3,
         "trace_median_s": round(statistics.median(r["seconds"] for r in results), 4),
@@ -69,5 +78,5 @@ if __name__ == "__main__":
         "config": config,
         "notes": "One natural photograph, three fresh CPU workers. Peak RSS sampled every 10ms includes quality rendering. No paid-service comparison; no claim that one photograph establishes general quality parity.",
     }
-    Path("benchmarks/photograph-results.json").write_text(json.dumps(result, indent=2))
+    args.output.write_text(json.dumps(result, indent=2), encoding="utf-8")
     print(json.dumps(result, indent=2))

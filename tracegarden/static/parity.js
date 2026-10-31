@@ -297,12 +297,12 @@ $("selectSimilar").onclick = async () => {
 };
 $("normalizeRepeats").onclick = () => editOperation("repeat");
 $("checkUpdates").onclick = async () => {
-  status("Checking published releases�");
+  status("Checking published releases...");
   try {
     const result = await request("/api/updates", {});
     status(
       result.available
-        ? `Version ${result.latest} is available. Download from the project�s Releases page.`
+        ? `Version ${result.latest} is available. Download from the project's Releases page.`
         : `You have ${result.current}; no newer published version was found.`,
     );
     if (result.available) {

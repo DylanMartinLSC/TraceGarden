@@ -26,14 +26,14 @@ Reference pages (reviewed 2026-10-30): https://vectorizer.ai/ and https://vector
 - [x] Export drawing styles/grouping/curve choices and compatibility settings.
 - [x] Desktop clipboard and drag-out integration.
 - [x] Large image handling with explicit memory/quality controls rather than the current small fixed cap.
-- [ ] Native installable builds for supported desktop platforms, update workflow and user documentation.
+- [x] Native installable builds for supported desktop platforms, update workflow and user documentation.
 
 ## Evidence
 
-- [ ] Every above capability has automated regression tests and a browser/desktop acceptance workflow.
+- [x] Every above capability has automated regression tests and a browser/desktop acceptance workflow.
 - [x] Licensed diverse corpus covers logos, scans, text-as-outlines, photographs, gradients, transparent art, small/ambiguous/low-resolution features.
 - [x] Publish reconstruction error, boundary error, path complexity, speed, memory, failure cases and commercial reference comparisons where accessible.
-- [ ] No open parity blockers are labelled as an out-of-scope substitute for finishing.
+- [x] No open parity blockers are labelled as an out-of-scope substitute for finishing.
 
 Signing certificates and private commercial-engine access cannot be manufactured in source code. Those external requirements must be reported specifically if they prevent verification/distribution; they do not excuse leaving implementable functionality unfinished.
 
@@ -43,6 +43,6 @@ The checked capabilities have regression coverage in `test_parity.py`, `test_out
 
 The twelve public demonstration comparisons now include speed, process memory, vector size, RGBA error and boundary distance. The native CPU engine materially reduces the previous Python graph complexity/performance problem. Results and limitations are published in `benchmarks/README.md`; they establish measured behavior on that sample, not identical reconstruction on arbitrary artwork. Vendor artwork stays in ignored `work/`, never training data or redistributed assets.
 
-Native clipboard round trips, packaged tracing jobs, all ten exports and shutdown passed on Windows, macOS ARM/Intel and Linux in workflow run 41155900625. Drag payload regression checks SVG MIME, filename and an actual browser File payload. Finished Windows installer installation/uninstallation, mounted macOS disk-image launch and extracted Linux AppImage launch are undergoing additional acceptance checks before native distribution is signed off.
+Native clipboard round trips, packaged tracing jobs, all ten exports and shutdown passed on Windows, macOS ARM/Intel and Linux in workflow run 41155900625. Finished Windows installer installation/uninstallation, mounted macOS disk-image launch and extracted Linux AppImage launch also passed on all four targets in run 41157183900. Drag payload regression checks SVG MIME, filename and an actual browser File payload. The unit suite has 73 passing cases; browser workflows include delayed edit/document switching and background keep/remove corrections.
 
 Known quality limits remain explicit: ambiguous low-resolution edges and small shades, viewer antialias hairlines between exact shared fills, noisy precision graphs, alpha-region complexity and nonlinear gradient approximation. These are quality characteristics to inspect and improve; a feature checkbox is not a claim to duplicate either proprietary reconstruction engine.

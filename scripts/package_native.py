@@ -1,6 +1,7 @@
 """Build a self-contained desktop bundle on the current OS."""
 
 import platform
+import argparse
 import subprocess
 import sys
 import shutil
@@ -8,6 +9,10 @@ from pathlib import Path
 
 root = Path(__file__).resolve().parents[1]
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--output", type=Path, default=root / "dist")
+    args = parser.parse_args()
+    output = args.output.resolve()
     system = platform.system()
     command = [
         sys.executable,
@@ -17,6 +22,8 @@ if __name__ == "__main__":
         "--clean",
         "--name",
         "TraceGarden",
+        "--distpath",
+        str(output),
         "--collect-all",
         "tracegarden",
         "--collect-all",
@@ -39,9 +46,9 @@ if __name__ == "__main__":
     command.append("launcher.py")
     subprocess.run(command, cwd=root, check=True)
     subprocess.run([sys.executable, "scripts/notices.py"], cwd=root, check=True)
-    folder = root / "dist" / "TraceGarden"
+    folder = output / "TraceGarden"
     if system == "Darwin":
-        folder = root / "dist" / "TraceGarden.app" / "Contents" / "Resources"
+        folder = output / "TraceGarden.app" / "Contents" / "Resources"
     for name in [
         "README.md",
         "FEATURES.md",

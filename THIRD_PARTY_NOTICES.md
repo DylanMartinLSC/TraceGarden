@@ -2,7 +2,8 @@
 
 TraceGarden source is MIT. Dependency licenses remain their own and are included in `third-party-licenses` and the portable package. The dependency inventory is generated from installed distribution metadata; some development-only libraries are included. It is not a legal certification.
 
-- VTracer 0.6.15 — MIT, https://github.com/visioncortex/vtracer . This stable engine is pinned; newer upstream versions have separate APIs.
+- VTracer 1.0.0a4 — MIT OR Apache-2.0; distributed under the MIT option, https://github.com/visioncortex/vtracer/tree/1.0.0-alpha.4 . The native API is pinned and tested on supported platforms. The wheel omits license files, so the exact tagged upstream LICENSE is included in `third-party-licenses/vtracer/LICENSE`.
+- resvg-py / resvg — MIT and bundled Rust dependency terms; included distribution license, https://github.com/baseplate-admin/resvg-py and https://github.com/RazrFalcon/resvg .
 - Pillow — HPND and bundled codec notices, https://python-pillow.org/
 - FastAPI / Starlette / Uvicorn — MIT / BSD licenses in distributions.
 - NumPy / SciPy / scikit-image — BSD family plus included third-party numerical and algorithm notices.

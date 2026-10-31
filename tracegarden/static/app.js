@@ -14,6 +14,7 @@ let cancelled = false,
   nodeMode = "nodes";
 let autosaveTimer = null,
   saveGeneration = 0,
+  importSequence = 0,
   brushPattern = null,
   brushActive = false,
   painting = false;
@@ -134,6 +135,7 @@ function queue() {
 }
 function add(files) {
   if (busy) return;
+  ++importSequence;
   let warning = "";
   for (const file of files) {
     if (items.length >= 20) {
@@ -627,6 +629,8 @@ function scheduleSave() {
   }, 700);
 }
 async function restore(doc) {
+  if (busy)
+    throw Error("Finish the current operation before opening a project.");
   if (
     doc?.type !== "TraceGarden" ||
     doc.version !== 1 ||
@@ -634,6 +638,8 @@ async function restore(doc) {
     doc.items.length > 20
   )
     throw Error("This is not a supported TraceGarden project.");
+  busy = true;
+  queue();
   const loaded = [];
   try {
     for (const item of doc.items) {
@@ -693,8 +699,11 @@ async function restore(doc) {
     }
   } catch (error) {
     loaded.forEach((item) => URL.revokeObjectURL(item.url));
+    busy = false;
+    queue();
     throw error;
   }
+  busy = false;
   items.forEach((item) => URL.revokeObjectURL(item.url));
   items = loaded;
   current = 0;
@@ -704,6 +713,7 @@ async function restore(doc) {
   status("Project restored.");
 }
 async function recover() {
+  const sequence = ++importSequence;
   try {
     const db = await database();
     const value = await new Promise((resolve, reject) => {
@@ -715,6 +725,7 @@ async function recover() {
       r.onerror = reject;
     });
     db.close();
+    if (sequence !== importSequence) return;
     if (!value) throw Error("No autosave was found in this browser.");
     await restore(value);
   } catch (error) {
@@ -943,6 +954,7 @@ $("saveProject").onclick = async () => {
 };
 $("openProject").onclick = () => $("projectFile").click();
 $("projectFile").onchange = async (event) => {
+  const sequence = ++importSequence;
   try {
     const file = event.target.files[0];
     if (!file) return;
@@ -950,7 +962,9 @@ $("projectFile").onchange = async (event) => {
       throw Error(
         "Project exceeds 512 MB. Save large batches as separate projects.",
       );
-    await restore(JSON.parse(await file.text()));
+    const doc = JSON.parse(await file.text());
+    if (sequence !== importSequence) return;
+    await restore(doc);
   } catch (error) {
     status(error.message, true);
   } finally {
@@ -964,6 +978,7 @@ $("clear").onclick = async () => {
   status("Clearing session…");
   clearTimeout(autosaveTimer);
   ++saveGeneration;
+  ++importSequence;
   items.forEach((item) => URL.revokeObjectURL(item.url));
   items = [];
   current = 0;

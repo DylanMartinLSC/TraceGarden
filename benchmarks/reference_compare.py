@@ -28,7 +28,20 @@ from parity_corpus import metrics
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--download-public-examples", action="store_true")
+    parser.add_argument(
+        "--one-cpu",
+        action="store_true",
+        help="Restrict this benchmark to one available logical CPU (Windows/Linux).",
+    )
+    parser.add_argument(
+        "--output", type=Path, default=Path("benchmarks/reference-results.json")
+    )
     args = parser.parse_args()
+    if args.one_cpu:
+        process = psutil.Process()
+        if not hasattr(process, "cpu_affinity"):
+            raise SystemExit("CPU affinity is unavailable on this platform.")
+        process.cpu_affinity([process.cpu_affinity()[0]])
     folder = Path("work/reference-examples")
     folder.mkdir(parents=True, exist_ok=True)
     manifest = folder / "manifest.json"
@@ -151,7 +164,7 @@ def main():
         rows.append(row)
         print(row, flush=True)
         (folder / f"{name}-tracegarden.svg").write_text(result["svg"])
-        Path("benchmarks/reference-results.json").write_text(
+        args.output.write_text(
             json.dumps(
                 {
                     "environment": {
@@ -161,6 +174,7 @@ def main():
                         "vtracer": version("vtracer"),
                         "tracegarden": version("tracegarden"),
                         "renderer": version("resvg-py"),
+                        "one_logical_cpu": args.one_cpu,
                     },
                     "options": {
                         "preset": "auto",

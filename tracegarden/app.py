@@ -4,6 +4,7 @@ import xml.etree.ElementTree as ET
 import io
 import re
 import zipfile
+from importlib.metadata import version
 
 from fastapi import FastAPI, File, Form, UploadFile, HTTPException, Request
 from fastapi.responses import FileResponse, Response
@@ -25,7 +26,7 @@ async def lifespan(app):
     await jobs.close()
 
 
-app = FastAPI(title="TraceGarden", version="0.2.0", lifespan=lifespan)
+app = FastAPI(title="TraceGarden", version=version("tracegarden"), lifespan=lifespan)
 app.add_middleware(
     TrustedHostMiddleware, allowed_hosts=["127.0.0.1", "localhost", "testserver"]
 )

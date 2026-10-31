@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tracegarden"
-version = "0.3.0.dev0"
+version = "0.3.0"
 description = "Private, CPU-powered raster to vector studio"
 requires-python = ">=3.11"
 license = "MIT"
