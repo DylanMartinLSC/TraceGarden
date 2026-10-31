@@ -127,3 +127,31 @@ def test_api_and_spawned_job_match_direct_high_profile():
             ).status_code
             == 400
         )
+
+
+def test_app_sessions_do_not_reuse_tasks_from_closed_event_loops():
+    import importlib
+
+    app_module = importlib.import_module("tracegarden.app")
+    managers = []
+    for _ in range(2):
+        with TestClient(app) as client:
+            manager = app_module.jobs
+            assert not manager.jobs
+            assert all(manager is not previous for previous in managers)
+            managers.append(manager)
+            response = client.post(
+                "/api/jobs",
+                files={"file": ("fixture.png", fixture_image(), "image/png")},
+            )
+            ident = response.json()["id"]
+            for _ in range(200):
+                state = client.get(f"/api/jobs/{ident}").json()
+                if state["state"] not in {"queued", "running"}:
+                    break
+                time.sleep(0.1)
+            assert state["state"] == "complete", state
+        assert all(
+            job.task.done() and job.process is None for job in manager.jobs.values()
+        )
+        assert all(job.task.get_loop().is_closed() for job in manager.jobs.values())

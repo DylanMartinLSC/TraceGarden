@@ -22,8 +22,15 @@ jobs = JobManager()
 
 @asynccontextmanager
 async def lifespan(app):
-    yield
-    await jobs.close()
+    global jobs, gate
+    # Tasks and semaphores belong to the event loop of this app session.
+    # A later session must not inherit tasks from a loop that has shut down.
+    jobs = JobManager()
+    gate = asyncio.Semaphore(1)
+    try:
+        yield
+    finally:
+        await jobs.close()
 
 
 app = FastAPI(title="TraceGarden", version=version("tracegarden"), lifespan=lifespan)
