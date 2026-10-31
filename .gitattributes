@@ -11,4 +11,6 @@
 *.toml text eol=lf
 *.json text eol=lf
 *.txt text eol=lf
+*.pdf binary
+*.png binary
 third-party-licenses/** -whitespace
