@@ -16,17 +16,21 @@ def markdown(report):
     lines = [
         "# Actual comparison coverage",
         "",
-        "The commercial comparison is limited to **12 public Vectorizer.AI example pairs**. "
-        "We have **not benchmarked Vector Magic Desktop**, commercial service latency, "
-        "commercial CPU usage or commercial memory use. TraceGarden timing/memory figures "
-        "elsewhere in this folder measure TraceGarden alone. These results do not establish "
-        "general commercial quality parity.",
+        (
+            "The commercial comparison is limited to **12 public Vectorizer.AI example pairs**. "
+            "We have **not benchmarked Vector Magic Desktop**, commercial service latency, "
+            "commercial CPU usage or commercial memory use. TraceGarden timing/memory figures "
+            "elsewhere in this folder measure TraceGarden alone. These results do not establish "
+            "general commercial quality parity."
+        ),
         "",
-        "Each row below includes the original input and the vendor-provided SVG reference. "
-        "Both SVGs are rendered at the input dimensions using resvg. Sizes are uncompressed "
-        "SVG bytes. MAE is premultiplied RGBA error against the original input on a 0–1 scale. "
-        "Lower input MAE can reward retaining JPEG noise or blur; it is not a perceptual "
-        "quality ranking. The source set was selected by the vendor, not sampled independently.",
+        (
+            "Each row below includes the original input and the vendor-provided SVG reference. "
+            "Both SVGs are rendered at the input dimensions using resvg. Sizes are uncompressed "
+            "SVG bytes. MAE is premultiplied RGBA error against the original input on a 0–1 scale. "
+            "Lower input MAE can reward retaining JPEG noise or blur; it is not a perceptual "
+            "quality ranking. The source set was selected by the vendor, not sampled independently."
+        ),
         "",
         "| Example / original | Vectorizer.AI reference | Vectorizer.AI SVG bytes | TraceGarden SVG bytes | Vectorizer.AI input MAE | TraceGarden input MAE |",
         "|---|---|---:|---:|---:|---:|",
@@ -42,14 +46,18 @@ def markdown(report):
     lower_error = sum(r["mae_vs_input"] < r["vendor_mae_vs_input"] for r in rows)
     lines += [
         "",
-        f"On these {len(rows)} examples, TraceGarden produces smaller SVGs on {smaller} "
-        f"and lower input MAE on {lower_error}. Neither statistic establishes better visual quality.",
+        (
+            f"On these {len(rows)} examples, TraceGarden produces smaller SVGs on {smaller} "
+            f"and lower input MAE on {lower_error}. Neither statistic establishes better visual quality."
+        ),
         "",
         "## Visual comparison",
         "",
-        "Generate an offline gallery with original raster, Vectorizer.AI reference, and "
-        "TraceGarden output shown together. It includes synchronized zoom/scroll and paired metrics. "
-        "Third-party artwork remains in the local cache and generated gallery, outside the published source.",
+        (
+            "Generate an offline gallery with original raster, Vectorizer.AI reference, and "
+            "TraceGarden output shown together. It includes synchronized zoom/scroll and paired metrics. "
+            "Third-party artwork remains in the local cache and generated gallery, outside the published source."
+        ),
         "",
         "```sh",
         "python benchmarks/reference_compare.py --download-public-examples",
@@ -57,10 +65,12 @@ def markdown(report):
         "# Open work/reference-comparison.html in a browser.",
         "```",
         "",
-        "The gallery uses browser SVG rendering; numeric metrics use resvg. Raw results, "
-        "source URLs, input/reference SHA-256 hashes, settings and environment details are in "
-        "[reference-results.json](reference-results.json). The [main report](README.md) "
-        "also lists error between the two outputs and measured TraceGarden resource use.",
+        (
+            "The gallery uses browser SVG rendering; numeric metrics use resvg. Raw results, "
+            "source URLs, input/reference SHA-256 hashes, settings and environment details are in "
+            "[reference-results.json](reference-results.json). The [main report](README.md) "
+            "also lists error between the two outputs and measured TraceGarden resource use."
+        ),
     ]
     return "\n".join(lines) + "\n"
 
@@ -109,8 +119,8 @@ def gallery(report, cache):
 header{position:sticky;top:0;background:#f7f6f1;z-index:1;padding:12px;border-bottom:1px solid #bbb}
 section{padding:20px 0;border-bottom:1px solid #bbb}.row{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
 figure{margin:0;min-width:0}figcaption{font-weight:700;padding:8px}.viewport{height:420px;overflow:auto;background:repeating-conic-gradient(#fff 0% 25%,#eee 0% 50%) 0/20px 20px;border:1px solid #ccc}
-.image{width:calc(100% * var(--zoom,1));position:relative}img{display:block;width:100%;height:100%}a{color:#175cb0}input{vertical-align:middle}
-@media(max-width:700px){.row{grid-template-columns:1fr}.viewport{height:350px}}</style>
+.image{width:calc(100% * var(--zoom,1));height:calc(420px * var(--zoom,1));position:relative}img{display:block;width:100%;height:100%;object-fit:contain}a{color:#175cb0}input{vertical-align:middle}
+@media(max-width:700px){.row{grid-template-columns:1fr}.viewport{height:350px}.image{height:calc(350px * var(--zoom,1))}}</style>
 <header><h1>TraceGarden / Vectorizer.AI</h1><p>12 public example pairs. No Vector Magic comparison or commercial speed/memory measurements.</p>
 <label>Zoom all images <input id="zoom" type="range" min="1" max="4" step=".25" value="1"><output id="level">1×</output></label></header>
 <p>These are public vendor-selected examples, not an independent quality ranking. Input error can reward JPEG artifacts. Browser previews may differ slightly from the resvg renderer used for metrics. This gallery is self-contained and makes no network requests unless you open a source link.</p>
