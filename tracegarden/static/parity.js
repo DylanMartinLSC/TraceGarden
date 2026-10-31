@@ -112,6 +112,7 @@ render = function () {
     if (result?.symmetry?.length)
       parts.push(`Symmetry: ${result.symmetry.join(", ")}`);
     if (result?.full_alpha) parts.push("Spatially varying alpha preserved");
+    if (result?.quality?.message) parts.unshift(result.quality.message);
     $("parityFeedback").textContent = parts.join(" · ");
   }
 };

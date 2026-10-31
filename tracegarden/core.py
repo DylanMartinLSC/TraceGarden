@@ -31,6 +31,7 @@ def pixels(image):
 
 
 class Options(BaseModel):
+    quality: Literal["fast", "high"] = "fast"
     preset: Literal[
         "auto", "logo", "illustration", "photo", "ink", "pixel", "centerline"
     ] = "logo"
@@ -75,6 +76,21 @@ class Options(BaseModel):
 
 
 def trace(data: bytes, options: Options) -> dict:
+    from .quality import HIGH_TUNING, resolve_options, describe
+    from .tuning import experimental_tuning
+
+    if options.quality == "high":
+        with experimental_tuning(HIGH_TUNING):
+            result = _trace(data, resolve_options(options))
+    else:
+        result = _trace(data, options)
+    result["quality"] = describe(options.quality, result)
+    if result["quality"]["status"] == "fallback":
+        result["warnings"].append(result["quality"]["message"])
+    return result
+
+
+def _trace(data: bytes, options: Options) -> dict:
     started = time.perf_counter()
     if len(data) > MAX_BYTES:
         raise ValueError(f"Image exceeds the {MAX_BYTES // 1024 // 1024} MB limit.")

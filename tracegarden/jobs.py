@@ -54,6 +54,9 @@ class JobManager:
                 self.jobs.pop(ident, None)
 
     def submit(self, data, options):
+        from .quality import resolve_options
+
+        options = resolve_options(options)
         self.prune()
         if (
             len(self.jobs) >= 20

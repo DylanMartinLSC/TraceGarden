@@ -31,6 +31,7 @@ if __name__ == "__main__":
                 "tests/browser_check.py",
                 "tests/studio_browser_check.py",
                 "tests/parity_browser_check.py",
+                "tests/quality_browser_check.py",
             ]:
                 subprocess.run([sys.executable, script], env=env, check=True)
         finally:

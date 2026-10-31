@@ -52,6 +52,11 @@
           ><button id="demo" class="quiet">Try a sample image</button>
           <ul id="queue" aria-label="Image queue"></ul>
           <h2>2. Choose a style</h2>
+          <label>Conversion quality<select id="quality" aria-describedby="qualityHelp">
+            <option value="fast">Fast</option>
+            <option value="high">High Quality · more detail</option>
+          </select></label>
+          <p id="qualityHelp">High Quality uses the graph fidelity research profile. It can take longer and produce larger files. Detail enhancement uses standard color processing when its work limit is reached or the image is unsupported.</p>
           <label
             >Artwork type<select id="preset">
               <option value="auto">

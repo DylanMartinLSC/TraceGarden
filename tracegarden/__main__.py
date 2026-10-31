@@ -29,6 +29,7 @@ def main():
         "convert", help="Convert one or more images without opening the studio"
     )
     batch.add_argument("images", nargs="+", type=Path)
+    batch.add_argument("--quality", choices=["fast", "high"], default=None)
     batch.add_argument("--output", type=Path, default=Path("vectors"))
     batch.add_argument(
         "--format",
@@ -44,6 +45,8 @@ def main():
 
         try:
             options = Options.model_validate_json(args.options)
+            if args.quality is not None:
+                options = options.model_copy(update={"quality": args.quality})
         except ValueError as exc:
             parser.error(str(exc))
         args.output.mkdir(parents=True, exist_ok=True)
@@ -60,6 +63,8 @@ def main():
                             "output": str(target),
                             "paths": result["paths"],
                             "seconds": result["seconds"],
+                            "quality": result["quality"],
+                            "warnings": result["warnings"],
                         }
                     )
                 )

@@ -41,6 +41,7 @@ async function request(url, body, method = "POST") {
 function config() {
   const result = {};
   for (const id of [
+    "quality",
     "preset",
     "colors",
     "speckle",
@@ -62,7 +63,7 @@ function config() {
     result[id] =
       el.type === "checkbox"
         ? el.checked
-        : ["preset", "layering"].includes(id)
+        : ["quality", "preset", "layering"].includes(id)
           ? el.value
           : Number(el.value);
   }
@@ -76,6 +77,7 @@ function config() {
   return result;
 }
 function applyConfig(o) {
+  $("quality").value = o?.quality || "fast";
   for (const [key, value] of Object.entries(o || {}))
     if ($(key) && !["palette", "crop"].includes(key)) {
       if ($(key).type === "checkbox") $(key).checked = value;
@@ -819,7 +821,19 @@ $("preset").onchange = () => {
   $("colors").oninput();
   $("speckle").value = preset === "pixel" ? 0 : 4;
   $("precision").value = preset === "photo" ? 7 : 4;
+  if ($("quality").value === "high") applyQualityDefaults();
 };
+function applyQualityDefaults() {
+  const high = $("quality").value === "high" &&
+    !["ink", "centerline", "pixel"].includes($("preset").value);
+  $("speckle").value = high || $("preset").value === "pixel" ? 0 : 4;
+  $("corner").value = high ? 45 : 60;
+  $("precision").value = high ? 6 : $("preset").value === "photo" ? 7 : 4;
+  $("geometry").checked = true;
+  $("gradients").checked = high;
+  $("layering").value = "auto";
+}
+$("quality").onchange = applyQualityDefaults;
 document.querySelectorAll("[data-view]").forEach(
   (button) =>
     (button.onclick = () => {
