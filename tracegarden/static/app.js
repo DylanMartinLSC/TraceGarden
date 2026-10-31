@@ -135,8 +135,8 @@ function add(files) {
       warning = "A batch can contain up to 20 images.";
       break;
     }
-    if (file.size > 25 * 1024 * 1024) {
-      warning = `${file.name} is larger than 25 MB.`;
+    if (file.size > 100 * 1024 * 1024) {
+      warning = `${file.name} is larger than 100 MB.`;
       continue;
     }
     items.push({

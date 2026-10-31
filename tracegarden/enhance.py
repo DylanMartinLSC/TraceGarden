@@ -93,6 +93,16 @@ def primitives(root, tolerance=0.8):
                 count += 1
                 continue
         corners = cv2.approxPolyDP(pts, tolerance * 0.8, True).reshape(-1, 2)
+        from .whole_shapes import fit_star
+
+        if fit_star(el, tolerance):
+            count += 1
+            continue
+        from .modeling import fit_rotated_rectangle
+
+        if fit_rotated_rectangle(el, tolerance):
+            count += 1
+            continue
         if 3 <= len(corners) <= 24:
             residual = [
                 abs(cv2.pointPolygonTest(corners, tuple(map(float, p)), True))

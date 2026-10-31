@@ -1,0 +1,8 @@
+[Desktop Entry]
+Type=Application
+Name=TraceGarden
+Comment=Local CPU image-to-vector studio
+Exec=TraceGarden
+Icon=TraceGarden
+Terminal=false
+Categories=Graphics;VectorGraphics;

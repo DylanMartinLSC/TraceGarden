@@ -18,8 +18,8 @@ from PIL import (
 from pydantic import BaseModel, Field, field_validator
 from .svgdoc import serialize
 
-MAX_BYTES = 25 * 1024 * 1024
-MAX_PIXELS = 16_000_000
+MAX_BYTES = 100 * 1024 * 1024
+MAX_PIXELS = 100_000_000
 Image.MAX_IMAGE_PIXELS = MAX_PIXELS
 NS = "{http://www.w3.org/2000/svg}"
 ET.register_namespace("", NS[1:-1])
@@ -31,18 +31,20 @@ def pixels(image):
 
 
 class Options(BaseModel):
-    preset: Literal["logo", "illustration", "photo", "ink", "pixel", "centerline"] = (
-        "logo"
-    )
+    preset: Literal[
+        "auto", "logo", "illustration", "photo", "ink", "pixel", "centerline"
+    ] = "logo"
     colors: int = Field(16, ge=2, le=256)
     speckle: int = Field(4, ge=0, le=64)
     corner: int = Field(60, ge=0, le=180)
     precision: int = Field(4, ge=1, le=8)
     threshold: int = Field(128, ge=0, le=255)
-    max_size: int = Field(1600, ge=64, le=4096)
+    max_size: int = Field(1600, ge=64, le=16384)
+    memory_limit_mib: int = Field(1024, ge=128, le=32768)
+    timeout_seconds: int = Field(120, ge=10, le=3600)
     smooth: bool = False
     remove_white: bool = False
-    layering: Literal["stacked", "cutout", "mosaic"] = "stacked"
+    layering: Literal["auto", "stacked", "cutout", "mosaic", "smooth"] = "stacked"
     layer_difference: int = Field(16, ge=0, le=255)
     geometry: bool = False
     gradients: bool = False
@@ -51,6 +53,13 @@ class Options(BaseModel):
     crop: tuple[int, int, int, int] | None = None
     contrast: float = Field(1, ge=0.25, le=4)
     palette: list[str] = Field(default_factory=list, max_length=64)
+    background: Literal["keep", "auto", "color"] = "keep"
+    background_color: str = "#ffffff"
+    background_tolerance: float = Field(18, ge=0, le=120)
+    symmetry: Literal[
+        "none", "auto", "horizontal", "vertical", "both", "rotational"
+    ] = "none"
+    symmetry_order: int = Field(2, ge=2, le=16)
 
     @field_validator("palette")
     @classmethod
@@ -65,14 +74,27 @@ class Options(BaseModel):
 def trace(data: bytes, options: Options) -> dict:
     started = time.perf_counter()
     if len(data) > MAX_BYTES:
-        raise ValueError("Image exceeds the 25 MB limit.")
+        raise ValueError(f"Image exceeds the {MAX_BYTES // 1024 // 1024} MB limit.")
+    warnings = []
+    memory_side = max(64, int((options.memory_limit_mib * 1024**2 / 200) ** 0.5))
+    effective_size = min(options.max_size, memory_side)
+    if effective_size < options.max_size:
+        warnings.append(
+            f"Trace size limited to {effective_size} pixels by the selected memory budget."
+        )
     try:
         with Image.open(io.BytesIO(data)) as source:
             if source.width * source.height > MAX_PIXELS:
-                raise ValueError("Image exceeds the 16 megapixel limit.")
+                raise ValueError("Image exceeds the 100 megapixel source limit.")
             if source.format not in {"PNG", "JPEG", "WEBP", "BMP", "GIF", "TIFF"}:
                 raise ValueError("Choose PNG, JPEG, WebP, BMP, GIF or TIFF.")
             original = source.size
+            if source.format == "JPEG" and not options.crop:
+                source.draft("RGB", (effective_size, effective_size))
+            if source.width * source.height * 10 > options.memory_limit_mib * 1024**2:
+                raise ValueError(
+                    "Source decoding exceeds the selected memory budget. Increase the budget or use a smaller source image."
+                )
             oriented = ImageOps.exif_transpose(source)
             profile = source.info.get("icc_profile")
             image = oriented.convert("RGBA")
@@ -108,8 +130,49 @@ def trace(data: bytes, options: Options) -> dict:
         image = image.rotate(-options.rotation, expand=True)
     if options.flip:
         image = ImageOps.mirror(image)
-    image.thumbnail((options.max_size, options.max_size), Image.Resampling.LANCZOS)
+    del source, oriented
+    image.thumbnail((effective_size, effective_size), Image.Resampling.LANCZOS)
     reference_image = image.copy()
+    automatic_layout = options.layering == "auto" or (
+        options.preset == "auto" and "layering" not in options.model_fields_set
+    )
+    analysis = {}
+    if options.preset == "auto":
+        from .intelligence import analyze
+
+        analysis = analyze(image)
+        options = options.model_copy(
+            update={
+                "preset": analysis["preset"],
+                "colors": analysis["colors"],
+                "palette": options.palette or analysis.get("palette", []),
+            }
+        )
+    if automatic_layout:
+        options = options.model_copy(
+            update={"layering": "stacked" if options.preset == "photo" else "smooth"}
+        )
+        analysis["layout"] = options.layering
+    removed = {}
+    detected_symmetry = []
+    if options.background != "keep":
+        from .intelligence import remove_background
+
+        try:
+            image, removed = remove_background(
+                image,
+                options.background,
+                options.background_color,
+                options.background_tolerance,
+            )
+        except (ValueError, TypeError) as exc:
+            raise ValueError("Choose a valid background color.") from exc
+    if options.symmetry != "none":
+        from .intelligence import symmetry
+
+        image, detected_symmetry = symmetry(
+            image, options.symmetry, options.symmetry_order
+        )
     alpha = image.getchannel("A")
     rgb = Image.new("RGB", image.size, "white")
     # Preserve unassociated RGB for translucent artwork; avoid a white matte.
@@ -118,6 +181,8 @@ def trace(data: bytes, options: Options) -> dict:
         rgb = ImageEnhance.Contrast(rgb).enhance(options.contrast)
     if options.smooth:
         rgb = rgb.filter(ImageFilter.MedianFilter(3))
+    fitting_reference = rgb.convert("RGBA")
+    fitting_reference.putalpha(alpha)
     if options.preset in {"ink", "centerline"}:
         rgb = (
             rgb.convert("L")
@@ -139,21 +204,36 @@ def trace(data: bytes, options: Options) -> dict:
         rgb = rgb.quantize(
             colors=options.colors, method=Image.Quantize.MEDIANCUT
         ).convert("RGB")
+    subpixel_pixels = 0
+    if options.preset in {"logo", "illustration"} and options.layering == "smooth":
+        from .intelligence import color_coverage
+
+        rgb, subpixel_pixels = color_coverage(rgb, fitting_reference)
     image = rgb.convert("RGBA")
     image.putalpha(alpha)
     if options.remove_white:
         image.putdata(
             [(r, g, b, 0 if min(r, g, b) > 245 else a) for r, g, b, a in pixels(image)]
         )
-    if options.layering == "mosaic" and options.preset != "centerline":
+    from .intelligence import alpha_coverage
+
+    image, antialias_modelled = alpha_coverage(image)
+    full_alpha = bool(sum(image.getchannel("A").histogram()[1:255]))
+    if (
+        options.layering in {"mosaic", "smooth"} or full_alpha
+    ) and options.preset != "centerline":
         from .mosaic import trace_mosaic
 
-        if options.preset == "photo":
+        if options.preset == "photo" and not full_alpha:
             quantized = rgb.quantize(colors=options.colors).convert("RGBA")
             quantized.putalpha(image.getchannel("A"))
         else:
             quantized = image
         root = trace_mosaic(quantized, tolerance=0.5)
+        if options.layering == "smooth":
+            from .shared import smooth_shared
+
+            smooth_shared(root, tolerance=0.7, image=fitting_reference)
     elif options.preset == "centerline":
         from .enhance import centerlines
 
@@ -182,7 +262,7 @@ def trace(data: bytes, options: Options) -> dict:
     if (
         options.geometry
         and options.preset != "centerline"
-        and options.layering != "mosaic"
+        and options.layering not in {"mosaic", "smooth"}
     ):
         from .enhance import primitives
 
@@ -191,7 +271,11 @@ def trace(data: bytes, options: Options) -> dict:
         from .enhance import gradients
 
         fitted_gradients = gradients(root, rgb)
-    if sum(alpha.histogram()[1:255]) and options.preset != "centerline":
+    if (
+        sum(alpha.histogram()[1:255])
+        and not full_alpha
+        and options.preset != "centerline"
+    ):
         from .enhance import opacity_regions
 
         opacity_regions(root, alpha)
@@ -211,6 +295,13 @@ def trace(data: bytes, options: Options) -> dict:
         "resized": original != image.size,
         "geometry": reconstructed,
         "gradients": fitted_gradients,
+        "warnings": warnings,
+        "analysis": analysis,
+        "background": removed,
+        "symmetry": detected_symmetry,
+        "full_alpha": full_alpha,
+        "antialias_modelled": antialias_modelled,
+        "subpixel_pixels": subpixel_pixels,
         "preview": "data:image/png;base64,"
         + base64.b64encode(preview.getvalue()).decode(),
     }

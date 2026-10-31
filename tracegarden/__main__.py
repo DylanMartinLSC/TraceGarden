@@ -7,6 +7,20 @@ from pathlib import Path
 
 
 def main():
+    import sys
+    import tempfile
+
+    if sys.stdout is None or sys.stderr is None:
+        log_dir = Path(tempfile.gettempdir()) / "TraceGarden"
+        log_dir.mkdir(exist_ok=True)
+        log_file = log_dir / "application.log"
+        if log_file.exists() and log_file.stat().st_size > 5 * 1024**2:
+            log_file.write_text("")
+        stream = log_file.open("a", encoding="utf-8")
+        if sys.stdout is None:
+            sys.stdout = stream
+        if sys.stderr is None:
+            sys.stderr = stream
     parser = argparse.ArgumentParser(description="Open your private vector studio")
     parser.add_argument("--port", type=int, default=8741)
     parser.add_argument("--no-browser", action="store_true")
@@ -57,7 +71,11 @@ def main():
         threading.Timer(
             1.5, lambda: webbrowser.open(f"http://127.0.0.1:{args.port}")
         ).start()
-    uvicorn.run("tracegarden.app:app", host="127.0.0.1", port=args.port)
+    from .app import app
+
+    server = uvicorn.Server(uvicorn.Config(app, host="127.0.0.1", port=args.port))
+    app.state.server = server
+    server.run()
 
 
 if __name__ == "__main__":

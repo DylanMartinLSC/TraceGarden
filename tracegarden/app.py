@@ -36,8 +36,13 @@ gate = asyncio.Semaphore(1)
 @app.middleware("http")
 async def local_only(request: Request, call_next):
     length = request.headers.get("content-length")
-    if length and (not length.isdigit() or int(length) > 60 * 1024 * 1024):
-        return Response("Request exceeds the 60 MB limit.", status_code=413)
+    maximum = (
+        MAX_BYTES + 1024 * 1024
+        if request.url.path in {"/api/jobs", "/api/trace"}
+        else 60 * 1024 * 1024
+    )
+    if length and (not length.isdigit() or int(length) > maximum):
+        return Response("Request exceeds this endpoint's size limit.", status_code=413)
     origin = request.headers.get("origin")
     if origin and origin not in {
         f"http://{request.headers.get('host')}",
@@ -144,13 +149,26 @@ async def validate(body: ExportRequest):
         raise HTTPException(400, str(exc)) from exc
 
 
+@app.post("/api/clipboard")
+async def clipboard(body: ExportRequest):
+    from .desktop import copy_vector
+
+    try:
+        async with gate:
+            return await asyncio.to_thread(copy_vector, body.svg)
+    except (ValueError, OSError) as exc:
+        raise HTTPException(400, str(exc)) from exc
+
+
 @app.post("/api/jobs", status_code=202)
 async def submit_job(file: UploadFile = File(...), options: str = Form("{}")):
     try:
         config = Options.model_validate_json(options)
         data = await file.read(MAX_BYTES + 1)
         if not data or len(data) > MAX_BYTES:
-            raise ValueError("Image must be between 1 byte and 25 MB.")
+            raise ValueError(
+                f"Image must be between 1 byte and {MAX_BYTES // 1024 // 1024} MB."
+            )
         return jobs.submit(data, config).public()
     except (ValueError, ValidationError) as exc:
         raise HTTPException(400, str(exc)) from exc
@@ -178,3 +196,22 @@ async def cancel_job(ident: str):
 
 
 app.mount("/static", StaticFiles(directory=STATIC), name="static")
+
+
+@app.post("/api/shutdown")
+async def shutdown(request: Request):
+    server = getattr(request.app.state, "server", None)
+    if server is None:
+        raise HTTPException(409, "This session is managed by an external server.")
+    server.should_exit = True
+    return {"status": "stopping"}
+
+
+@app.post("/api/updates")
+async def updates():
+    from .updates import check_updates
+
+    try:
+        return await asyncio.to_thread(check_updates)
+    except ValueError as exc:
+        raise HTTPException(400, str(exc)) from exc

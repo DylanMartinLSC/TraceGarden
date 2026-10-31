@@ -17,9 +17,10 @@ def trace_mosaic(image, tolerance=0.6):
     data = np.asarray(image)
     h, w = data.shape[:2]
     packed = (
-        (data[:, :, 0].astype(np.int32) << 16)
-        | (data[:, :, 1].astype(np.int32) << 8)
-        | data[:, :, 2].astype(np.int32)
+        (data[:, :, 3].astype(np.int64) << 24)
+        | (data[:, :, 0].astype(np.int64) << 16)
+        | (data[:, :, 1].astype(np.int64) << 8)
+        | data[:, :, 2].astype(np.int64)
     )
     packed[data[:, :, 3] == 0] = -1
     padded = np.pad(packed, 1, constant_values=-2)
@@ -119,9 +120,15 @@ def trace_mosaic(image, tolerance=0.6):
         },
     )
     for shape, color in zip(shapes, colors):
-        ET.SubElement(
+        node = ET.SubElement(
             root,
             NS + "path",
-            {"d": polygon_d(shape), "fill": f"#{color:06X}", "fill-rule": "evenodd"},
+            {
+                "d": polygon_d(shape),
+                "fill": f"#{color & 0xFFFFFF:06X}",
+                "fill-rule": "evenodd",
+            },
         )
+        if color >> 24 != 255:
+            node.set("opacity", str(round((color >> 24) / 255, 6)))
     return root

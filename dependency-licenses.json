@@ -258,6 +258,12 @@
     "homepage": "https://www.reportlab.com/"
   },
   {
+    "name": "resvg_py",
+    "version": "0.5.0",
+    "license": null,
+    "homepage": null
+  },
+  {
     "name": "rl-renderPM",
     "version": "4.0.3",
     "license": "BSD license (see LICENSE.txt for details), Copyright (c) 2000-2022, ReportLab Inc.",

@@ -57,10 +57,10 @@ def validate_svg(svg: str):
         raise ValueError("Expected an SVG document.")
     width = float(root.get("width", "0"))
     height = float(root.get("height", "0"))
-    if not all(math.isfinite(x) and 0 < x <= 8192 for x in (width, height)):
-        raise ValueError("Vector dimensions must be between 1 and 8192 pixels.")
-    if width * height > 20_000_000:
-        raise ValueError("Vector canvas exceeds 20 megapixels.")
+    if not all(math.isfinite(x) and 0 < x <= 32768 for x in (width, height)):
+        raise ValueError("Vector dimensions must be between 1 and 32768 pixels.")
+    if width * height > 100_000_000:
+        raise ValueError("Vector canvas exceeds 100 megapixels.")
     if root.get("viewBox"):
         values = [float(x) for x in NUMBER.findall(root.get("viewBox"))]
         if values != [0, 0, width, height]:
@@ -180,11 +180,20 @@ def polygon(el):
     from shapely import make_valid
 
     # SVG evenodd: XOR nested rings, preserving holes regardless of winding.
-    result = Polygon()
+    pieces = []
     for ring in rings(el):
         if len(ring) >= 4:
-            result = result.symmetric_difference(make_valid(Polygon(ring)))
-    return make_valid(result)
+            pieces.append(make_valid(Polygon(ring)))
+    # Balanced parity reduction avoids repeatedly rebuilding a large exterior
+    # when a face contains thousands of holes (quadratic sequential XOR).
+    while len(pieces) > 1:
+        pieces = [
+            pieces[i].symmetric_difference(pieces[i + 1])
+            if i + 1 < len(pieces)
+            else pieces[i]
+            for i in range(0, len(pieces), 2)
+        ]
+    return make_valid(pieces[0]) if pieces else Polygon()
 
 
 def polygon_d(geom):
@@ -218,10 +227,25 @@ class EditRequest(BaseModel):
         "simplify",
         "outline",
         "reverse",
+        "corner-info",
+        "round-corners",
+        "shape",
+        "similar",
+        "repeat",
     ]
     indices: list[int] = Field(default_factory=list, max_length=500)
     points: list[list[float]] = Field(default_factory=list, max_length=10000)
     tolerance: float = Field(1.0, ge=0.05, le=20)
+    radius: float = Field(8, ge=0, le=1000)
+    corner_indices: list[int] | None = None
+    shape_type: Literal["circle", "ellipse", "rectangle", "star", "polygon"] = (
+        "rectangle"
+    )
+    center: tuple[float, float] = (64, 64)
+    size: tuple[float, float] = (80, 80)
+    rotation: float = Field(0, ge=-360, le=360)
+    sides: int = Field(5, ge=3, le=32)
+    inner_ratio: float = Field(0.45, ge=0.05, le=0.95)
 
 
 def edit_vector(req: EditRequest):
@@ -230,6 +254,50 @@ def edit_vector(req: EditRequest):
     if not req.indices or any(i < 0 or i >= len(paths) for i in req.indices):
         raise ValueError("Select one or more valid shapes.")
     chosen = [paths[i] for i in sorted(set(req.indices))]
+    if req.operation == "similar":
+        from .repetition import repeated
+
+        return {"matches": repeated(paths, req.indices[0])}
+    if req.operation == "repeat":
+        from .repetition import apply_repeats
+
+        apply_repeats(paths, sorted(set(req.indices)))
+    if req.operation == "corner-info":
+        from .modeling import corner_data
+
+        return {"corners": corner_data(chosen[0])}
+    if req.operation == "round-corners":
+        from .modeling import round_corners
+
+        for el in chosen:
+            el.set("d", round_corners(el, req.radius, req.corner_indices).d())
+            el.attrib.pop("transform", None)
+    if req.operation == "shape":
+        from .modeling import shape_path
+
+        if (
+            min(req.size) <= 0
+            or max(req.size) > 16000
+            or any(
+                not math.isfinite(v) or abs(v) > 100000
+                for v in [*req.center, *req.size]
+            )
+        ):
+            raise ValueError("Invalid shape dimensions.")
+        for el in chosen:
+            el.set(
+                "d",
+                shape_path(
+                    req.shape_type,
+                    *req.center,
+                    *req.size,
+                    req.rotation,
+                    req.radius,
+                    req.sides,
+                    req.inner_ratio,
+                ).d(),
+            )
+            el.attrib.pop("transform", None)
     if req.operation == "nodes":
         subpaths = rings(chosen[0], step=max(2, req.tolerance * 3))
         return {"subpaths": subpaths}

@@ -16,6 +16,12 @@ class ExportOptions(BaseModel):
     outline: bool = False
     color_space: Literal["rgb", "cmyk"] = "rgb"
     dxf_mode: Literal["spline", "polyline"] = "spline"
+    grouping: Literal["none", "color"] = "none"
+    draw_style: Literal["fill", "stroke", "fill-stroke"] = "fill"
+    curve_mode: Literal["all", "cubic", "quadratic", "polyline"] = "all"
+    compatibility: Literal["modern", "legacy"] = "modern"
+    quality: int = Field(95, ge=1, le=100)
+    memory_limit_mib: int = Field(1024, ge=128, le=32768)
 
 
 def colors(hexcolor):
@@ -71,8 +77,10 @@ def gradient_map(root):
 
 
 def render_png(root, options=None):
-    import cv2
-    from PIL import Image
+    """Render through independent CPU resvg, preserving SVG coverage and alpha."""
+    import struct
+    import zlib
+    from resvg_py import svg_to_bytes
 
     options = options or ExportOptions()
     scale = (
@@ -84,96 +92,35 @@ def render_png(root, options=None):
         round(float(root.get("width")) * scale),
         round(float(root.get("height")) * scale),
     )
-    if min(w, h) < 1 or w * h > 20_000_000:
-        raise ValueError("Requested PNG exceeds the 20 megapixel limit.")
-    # Premultiplied alpha compositing, no background matte.
-    canvas = np.zeros((h, w, 4), np.float32)
-    grads = gradient_map(root)
-    for el in root.findall(NS + "path"):
-        coordinates = [np.array(r) * scale for r in rings(el, step=0.75)]
-        if not coordinates:
-            continue
-        points = np.concatenate(coordinates)
-        padding = max(2, math.ceil(float(el.get("stroke-width", "1")) * scale))
-        left = max(0, int(np.floor(points[:, 0].min())) - padding)
-        top = max(0, int(np.floor(points[:, 1].min())) - padding)
-        right = min(w, int(np.ceil(points[:, 0].max())) + padding + 1)
-        bottom = min(h, int(np.ceil(points[:, 1].max())) + padding + 1)
-        if left >= right or top >= bottom:
-            continue
-        target = canvas[top:bottom, left:right]
-        mask = np.zeros((bottom - top, right - left), np.uint8)
-        contours = [
-            np.rint((r - [left, top]) * 256).astype(np.int32) for r in coordinates
-        ]
-        fill = el.get("fill", "#000000")
-        opacity = float(el.get("opacity", "1"))
-        if fill != "none" and contours:
-            cv2.fillPoly(
-                mask,
-                [c for c in contours if len(c) >= 3],
-                255,
-                lineType=cv2.LINE_AA,
-                shift=8,
-            )
-            alpha = mask.astype(np.float32) / 255 * opacity
-            if fill.startswith("url("):
-                grad = grads[fill[5:-1]]
-                stops = list(grad)
-                start = (
-                    np.array([float(grad.get("x1", "0")), float(grad.get("y1", "0"))])
-                    * scale
-                )
-                end = (
-                    np.array([float(grad.get("x2", "1")), float(grad.get("y2", "0"))])
-                    * scale
-                )
-                vec = end - start
-                den = max(float(vec @ vec), 1e-8)
-                yy, xx = np.ogrid[top:bottom, left:right]
-                t = np.clip(
-                    ((xx - start[0]) * vec[0] + (yy - start[1]) * vec[1]) / den, 0, 1
-                )
-                c0, c1 = (
-                    np.array(colors(stops[0].get("stop-color"))),
-                    np.array(colors(stops[-1].get("stop-color"))),
-                )
-                rgb = (
-                    c0[None, None, :] * (1 - t[:, :, None])
-                    + c1[None, None, :] * t[:, :, None]
-                )
-            else:
-                rgb = np.array(colors(fill))
-            target[:, :, :3] = rgb * alpha[:, :, None] + target[:, :, :3] * (
-                1 - alpha[:, :, None]
-            )
-            target[:, :, 3] = alpha + target[:, :, 3] * (1 - alpha)
-        stroke = el.get("stroke", "none")
-        if stroke != "none" and contours:
-            mask[:] = 0
-            cv2.polylines(
-                mask,
-                contours,
-                False,
-                255,
-                max(1, round(float(el.get("stroke-width", "1")) * scale)),
-                lineType=cv2.LINE_AA,
-                shift=8,
-            )
-            a = mask.astype(np.float32) / 255 * opacity
-            target[:, :, :3] = np.array(colors(stroke)) * a[:, :, None] + target[
-                :, :, :3
-            ] * (1 - a[:, :, None])
-            target[:, :, 3] = a + target[:, :, 3] * (1 - a)
-    alpha = canvas[:, :, 3:4]
-    canvas[:, :, :3] = np.divide(
-        canvas[:, :, :3], alpha, out=np.zeros_like(canvas[:, :, :3]), where=alpha > 0
+    maximum = options.memory_limit_mib * 1024**2 // 16
+    if min(w, h) < 1 or w * h > maximum:
+        raise ValueError(
+            f"Requested PNG exceeds the {maximum / 1_000_000:.1f} megapixel limit for this memory budget."
+        )
+    data = svg_to_bytes(
+        svg_string=serialize(root), width=w, height=h, skip_system_fonts=True
     )
-    out = io.BytesIO()
-    Image.fromarray(np.clip(canvas * 255, 0, 255).astype(np.uint8), "RGBA").save(
-        out, format="PNG", dpi=(options.dpi, options.dpi)
+    density = round(options.dpi / 0.0254)
+    payload = struct.pack(">IIB", density, density, 1)
+    physical = (
+        struct.pack(">I", len(payload))
+        + b"pHYs"
+        + payload
+        + struct.pack(">I", zlib.crc32(b"pHYs" + payload) & 0xFFFFFFFF)
     )
-    return out.getvalue()
+    # Add a single standard PNG physical-size chunk without decoding/reencoding.
+    output = data[:8]
+    offset = 8
+    while offset < len(data):
+        length = struct.unpack(">I", data[offset : offset + 4])[0]
+        kind = data[offset + 4 : offset + 8]
+        chunk = data[offset : offset + length + 12]
+        if kind != b"pHYs":
+            output += chunk
+        if kind == b"IHDR":
+            output += physical
+        offset += length + 12
+    return output
 
 
 def vector_pdf(root, options):
@@ -301,7 +248,7 @@ def vector_eps(root, options):
 def cad_export(root, options):
     import ezdxf
 
-    doc = ezdxf.new("R2010")
+    doc = ezdxf.new("R12" if options.compatibility == "legacy" else "R2010")
     doc.units = 4 if options.width_mm else 0
     width = float(root.get("width"))
     scale = options.width_mm / width if options.width_mm else 1
@@ -311,10 +258,15 @@ def cad_export(root, options):
         return (z.real * scale, -z.imag * scale, 0)
 
     for el in root.findall(NS + "path"):
-        if options.dxf_mode == "polyline":
+        if options.dxf_mode == "polyline" or options.compatibility == "legacy":
             for ring in rings(el, step=0.5):
                 if len(ring) > 1:
-                    space.add_lwpolyline(
+                    method = (
+                        space.add_polyline2d
+                        if options.compatibility == "legacy"
+                        else space.add_lwpolyline
+                    )
+                    method(
                         [(x * scale, -y * scale) for x, y in ring],
                         close=ring[0] == ring[-1],
                     )
@@ -336,6 +288,34 @@ def cad_export(root, options):
                 if seg.delta > 0:
                     a, b = b, a
                 space.add_arc(pt(center), r, a, b)
+            elif isinstance(seg, Arc):
+                rx, ry = seg.radius.real, seg.radius.imag
+                angle = math.radians(seg.rotation)
+                if rx >= ry:
+                    major = (
+                        rx * math.cos(angle) * scale,
+                        -rx * math.sin(angle) * scale,
+                        0,
+                    )
+                    start = -math.radians(seg.theta)
+                    end = -math.radians(seg.theta + seg.delta)
+                else:
+                    major = (
+                        -ry * math.sin(angle) * scale,
+                        -ry * math.cos(angle) * scale,
+                        0,
+                    )
+                    start = math.pi / 2 - math.radians(seg.theta)
+                    end = math.pi / 2 - math.radians(seg.theta + seg.delta)
+                if seg.delta > 0:
+                    start, end = end, start
+                space.add_ellipse(
+                    pt(seg.center),
+                    major_axis=major,
+                    ratio=min(rx, ry) / max(rx, ry),
+                    start_param=start,
+                    end_param=end,
+                )
             else:
                 for part in cubics(seg):
                     if isinstance(part, Line):
@@ -360,21 +340,84 @@ def cad_export(root, options):
 def export_document(svg, fmt, options=None):
     options = options or ExportOptions()
     root = validate_svg(svg)
-    if fmt not in {"svg", "pdf", "eps", "ai", "dxf", "png"}:
+    if fmt not in {
+        "svg",
+        "pdf",
+        "eps",
+        "ai",
+        "dxf",
+        "png",
+        "jpg",
+        "jpeg",
+        "gif",
+        "bmp",
+        "tiff",
+    }:
         raise ValueError("Unsupported export format.")
     if options.outline:
         for el in root.findall(NS + "path"):
             el.set("stroke", "#000000")
             el.set("stroke-width", "0.5")
             el.set("fill", "none")
+    elif options.draw_style != "fill":
+        for el in root.findall(NS + "path"):
+            el.set(
+                "stroke",
+                el.get("fill")
+                if not el.get("fill", "").startswith("url(")
+                and el.get("fill") != "none"
+                else "#000000",
+            )
+            el.set("stroke-width", "1")
+            if options.draw_style == "stroke":
+                el.set("fill", "none")
+    if options.curve_mode != "all":
+        from .curves import convert_curves
+
+        convert_curves(root, options.curve_mode)
     if fmt == "svg":
         if options.width_mm:
             ratio = float(root.get("height")) / float(root.get("width"))
             root.set("width", f"{options.width_mm:g}mm")
             root.set("height", f"{options.width_mm * ratio:g}mm")
+        if options.grouping == "color":
+            import xml.etree.ElementTree as ET
+
+            groups = {}
+            for el in list(root.findall(NS + "path")):
+                color = el.get("fill", "none")
+                if color not in groups:
+                    groups[color] = ET.SubElement(root, NS + "g")
+                root.remove(el)
+                groups[color].append(el)
         return serialize(root).encode()
     if fmt == "png":
         return render_png(root, options)
+    if fmt in {"jpg", "jpeg", "gif", "bmp", "tiff"}:
+        from PIL import Image
+
+        image = Image.open(io.BytesIO(render_png(root, options))).convert("RGBA")
+        matte = Image.new("RGB", image.size, "white")
+        matte.paste(image, mask=image.getchannel("A"))
+        out = io.BytesIO()
+        if fmt == "gif":
+            pal = matte.quantize(colors=255)
+            alpha = np.asarray(image.getchannel("A"))
+            indices = np.asarray(pal).copy()
+            indices[alpha < 128] = 255
+            final = Image.fromarray(indices, "P")
+            final.putpalette(pal.getpalette())
+            final.save(out, format="GIF", transparency=255)
+        else:
+            matte.save(
+                out,
+                format={"jpg": "JPEG", "jpeg": "JPEG", "bmp": "BMP", "tiff": "TIFF"}[
+                    fmt
+                ],
+                quality=options.quality,
+                dpi=(options.dpi, options.dpi),
+            )
+        return out.getvalue()
     if fmt in {"pdf", "ai"}:
         return vector_pdf(root, options)
     if fmt == "eps":

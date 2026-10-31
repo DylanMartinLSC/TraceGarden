@@ -1,4 +1,6 @@
-# Paid-service workflow coverage
+# Published 0.2 workflow coverage
+
+This table describes the published 0.2 release. Current full-parity development is tracked in [PARITY.md](PARITY.md), with tests and evidence; it remains an active, unfinished objective.
 
 Reference workflows: [Vectorizer.AI](https://vectorizer.ai/) and [Vector Magic Desktop](https://vectormagic.com/desktop), reviewed October 30, 2026. This is a capability inventory, not proof that proprietary reconstruction quality has been matched.
 

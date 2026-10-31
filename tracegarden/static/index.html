@@ -6,6 +6,7 @@
     <title>TraceGarden — Local vector studio</title>
     <link rel="stylesheet" href="/static/style.css" />
     <script defer src="/static/app.js"></script>
+    <script defer src="/static/parity.js"></script>
   </head>
   <body>
     <header>
@@ -13,6 +14,8 @@
         >◈ TraceGarden <span>LOCAL VECTOR STUDIO</span></a
       ><span class="private">● On your computer · CPU only</span>
       <div class="projectbar">
+        <button id="checkUpdates">Check updates</button
+        ><button id="quitApp">Quit app</button>
         <button id="saveProject">Save project</button
         ><button id="openProject">Open project</button
         ><button id="recoverProject">Recover autosave</button
@@ -39,7 +42,7 @@
           <label id="drop" class="drop" tabindex="0"
             >＋<strong>Drop images here</strong><span>or click to browse</span
             ><small
-              >PNG, JPG, WebP, GIF, BMP, TIFF<br />25 MB / 16 megapixels per
+              >PNG, JPG, WebP, GIF, BMP, TIFF<br />100 MB / 100 megapixels per
               image</small
             ><input
               id="files"
@@ -51,6 +54,9 @@
           <h2>2. Choose a style</h2>
           <label
             >Artwork type<select id="preset">
+              <option value="auto">
+                Automatic · detect artwork and palette
+              </option>
               <option value="logo">Logo · clean, limited colors</option>
               <option value="illustration">
                 Illustration · colorful artwork
@@ -75,8 +81,47 @@
           <details>
             <summary>Fine-tune your trace</summary>
             <label
+              >Background<select id="background">
+                <option value="keep">Keep</option>
+                <option value="auto">Remove automatically</option>
+                <option value="color">Remove selected border color</option>
+              </select></label
+            ><label
+              >Background color<input
+                type="color"
+                id="background_color"
+                value="#ffffff" /></label
+            ><label
+              >Background tolerance<input
+                id="background_tolerance"
+                type="range"
+                min="0"
+                max="120"
+                value="18" /></label
+            ><label
+              >Symmetry modelling<select id="symmetry">
+                <option value="none">Keep source geometry</option>
+                <option value="auto">Detect mirror symmetries</option>
+                <option value="horizontal">Left / right mirror</option>
+                <option value="vertical">Top / bottom mirror</option>
+                <option value="both">Both mirrors</option>
+                <option value="rotational">Rotational symmetry</option>
+              </select></label
+            ><label
+              >Rotation repetitions<input
+                id="symmetry_order"
+                type="number"
+                value="2"
+                min="2"
+                max="16"
+            /></label>
+            <label
               >Region layout<select id="layering">
+                <option value="auto">Automatic layout</option>
                 <option value="stacked">Stacked · hides edge seams</option>
+                <option value="smooth">
+                  Shared smooth curves · aligned neighbors
+                </option>
                 <option value="mosaic">
                   Shared boundaries · flat color regions
                 </option>
@@ -143,6 +188,20 @@
               /></label>
             </div>
             <label
+              >Worker memory budget (MiB)<input
+                id="memory_limit_mib"
+                type="number"
+                min="128"
+                max="32768"
+                value="1024" /></label
+            ><label
+              >Trace time limit (seconds)<input
+                id="timeout_seconds"
+                type="number"
+                min="10"
+                max="3600"
+                value="120" /></label
+            ><label
               >Remove tiny marks
               <input
                 id="speckle"
@@ -180,6 +239,8 @@
                 <option selected>1600</option>
                 <option>2400</option>
                 <option>4096</option>
+                <option>8192</option>
+                <option>16384</option>
               </select></label
             ><label class="check"
               ><input id="smooth" type="checkbox" /> Smooth noisy pixels</label
@@ -196,6 +257,10 @@
         </aside>
         <article>
           <div class="toolbar">
+            <button id="fullCanvas">Full canvas</button
+            ><button data-view="wipe" aria-pressed="false">Wipe</button
+            ><button data-view="outlines" aria-pressed="false">Outlines</button
+            ><button id="actualSize">Actual pixels</button>
             <div class="tabs" role="group" aria-label="Preview mode">
               <button data-view="compare" aria-pressed="true">Compare</button
               ><button data-view="vector" aria-pressed="false">Vector</button
@@ -215,6 +280,14 @@
             Add an image or try the sample to begin.
           </div>
           <progress id="progress" value="0" max="1" hidden></progress>
+          <label id="wipeControl" hidden
+            >Comparison position<input
+              id="compareSplit"
+              type="range"
+              min="0"
+              max="100"
+              value="50"
+          /></label>
           <div id="previews">
             <div class="pane" id="originalPane">
               <span class="caption">ORIGINAL</span>
@@ -233,6 +306,7 @@
             </div>
           </div>
           <div id="stats"></div>
+          <div id="parityFeedback" role="status"></div>
           <details id="repair">
             <summary>Correct pixels before tracing</summary>
             <p>
@@ -303,6 +377,101 @@
               ><button id="editNodes">Edit nodes</button
               ><button id="editCurves">Edit Bezier controls</button>
             </div>
+            <details id="cornerWorkspace">
+              <summary>Corner control · sharp or rounded</summary>
+              <p>
+                Select one shape, then load its corners. Radius changes preview
+                before you apply them.
+              </p>
+              <button id="selectSimilar">Select similar shapes</button
+              ><button id="normalizeRepeats">Normalize selected repeats</button
+              ><button id="loadCorners">Load selected corners</button
+              ><label
+                >Corner<select id="cornerChoice">
+                  <option value="all">All corners</option>
+                </select></label
+              ><label
+                >Round radius <output id="cornerRadiusValue">8</output> px<input
+                  id="cornerRadius"
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="0.5"
+                  value="8"
+              /></label>
+              <div class="actions">
+                <button id="sharpCorners">Make sharp</button
+                ><button id="applyCorners">Apply corners</button
+                ><button id="discardCorners">Discard preview</button>
+              </div>
+            </details>
+            <details>
+              <summary>Parameterized shapes</summary>
+              <p>Replace the selected shape with editable geometry.</p>
+              <label
+                >Shape<select id="paramKind">
+                  <option value="rectangle">Rounded rectangle</option>
+                  <option value="circle">Circle</option>
+                  <option value="ellipse">Ellipse</option>
+                  <option value="star">Star</option>
+                  <option value="polygon">Regular polygon</option>
+                </select></label
+              >
+              <div class="cropgrid">
+                <label
+                  >Center X<input
+                    id="paramX"
+                    type="number"
+                    value="128" /></label
+                ><label
+                  >Center Y<input
+                    id="paramY"
+                    type="number"
+                    value="128" /></label
+                ><label
+                  >Width<input
+                    id="paramW"
+                    type="number"
+                    value="100"
+                    min="1" /></label
+                ><label
+                  >Height<input
+                    id="paramH"
+                    type="number"
+                    value="100"
+                    min="1" /></label
+                ><label
+                  >Rotate °<input
+                    id="paramRotate"
+                    type="number"
+                    value="0"
+                    min="-360"
+                    max="360" /></label
+                ><label
+                  >Corner radius<input
+                    id="paramRadius"
+                    type="number"
+                    value="0"
+                    min="0" /></label
+                ><label
+                  >Points / sides<input
+                    id="paramSides"
+                    type="number"
+                    min="3"
+                    max="32"
+                    value="5" /></label
+                ><label
+                  >Star inner ratio<input
+                    id="paramInner"
+                    type="number"
+                    min="0.05"
+                    max="0.95"
+                    step="0.05"
+                    value="0.45"
+                /></label>
+              </div>
+              <button id="applyShape">Apply shape geometry</button>
+            </details>
             <div id="nodePanel" hidden>
               <p>
                 Node editing uses a polygon approximation. Compound shapes must
@@ -342,14 +511,47 @@
                   <option value="pdf">PDF · print & sharing</option>
                   <option value="eps">EPS · design software</option>
                   <option value="png">PNG · raster preview</option>
+                  <option value="jpg">JPG · raster</option>
+                  <option value="tiff">TIFF · raster</option>
+                  <option value="gif">GIF · raster</option>
+                  <option value="bmp">BMP · raster</option>
                   <option value="dxf">DXF · CAD curves or polylines</option>
                   <option value="ai">AI · PDF-compatible vector</option>
                 </select></label
               ><button id="save" class="primary">Download selected</button
-              ><button id="saveAll">Download all</button>
+              ><button id="saveAll">Download all</button
+              ><button id="copyVector">Copy SVG text</button
+              ><button id="copyNative">Copy to desktop apps</button
+              ><a id="dragVector" draggable="true" href="#"
+                >Drag SVG to desktop</a
+              >
             </div>
             <details>
               <summary>Export settings</summary>
+              <label
+                >Draw style<select id="draw_style">
+                  <option value="fill">Filled shapes</option>
+                  <option value="stroke">Stroked outlines</option>
+                  <option value="fill-stroke">Fill and stroke</option>
+                </select></label
+              ><label
+                >SVG grouping<select id="grouping">
+                  <option value="none">Individual shapes</option>
+                  <option value="color">Group by fill color</option>
+                </select></label
+              ><label
+                >Curve compatibility<select id="curve_mode">
+                  <option value="all">All curve types</option>
+                  <option value="cubic">Cubic curves and lines</option>
+                  <option value="quadratic">Quadratic curves and lines</option>
+                  <option value="polyline">Lines only</option>
+                </select></label
+              ><label
+                >DXF compatibility<select id="compatibility">
+                  <option value="modern">Modern (R2010)</option>
+                  <option value="legacy">Legacy (R12 polylines)</option>
+                </select></label
+              >
               <label
                 >Print resolution (DPI)<input
                   id="dpi"

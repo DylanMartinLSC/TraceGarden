@@ -27,7 +27,11 @@ if __name__ == "__main__":
                 time.sleep(0.1)
             else:
                 raise RuntimeError("Browser test server did not start")
-            for script in ["tests/browser_check.py", "tests/studio_browser_check.py"]:
+            for script in [
+                "tests/browser_check.py",
+                "tests/studio_browser_check.py",
+                "tests/parity_browser_check.py",
+            ]:
                 subprocess.run([sys.executable, script], env=env, check=True)
         finally:
             process.terminate()

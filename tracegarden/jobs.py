@@ -92,7 +92,12 @@ class JobManager:
                         job.state = "failed"
                         job.error = "The tracing worker stopped unexpectedly."
                         break
-                    if time.monotonic() - started > self.timeout:
+                    limit = (
+                        options.get("timeout_seconds", 120)
+                        if self.timeout == 120
+                        else self.timeout
+                    )
+                    if time.monotonic() - started > limit:
                         job.state = "failed"
                         job.error = "Tracing exceeded the time limit. Reduce image size or detail."
                         break

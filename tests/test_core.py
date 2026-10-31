@@ -67,9 +67,12 @@ def test_invalid_input(data):
         trace(data, Options())
 
 
-def test_oversized_input():
-    with pytest.raises(ValueError, match="25 MB"):
-        trace(b"0" * (25 * 1024 * 1024 + 1), Options())
+def test_oversized_input(monkeypatch):
+    import tracegarden.core as core
+
+    monkeypatch.setattr(core, "MAX_BYTES", 2 * 1024 * 1024)
+    with pytest.raises(ValueError, match="2 MB"):
+        trace(b"0" * (2 * 1024 * 1024 + 1), Options())
 
 
 @pytest.mark.parametrize(

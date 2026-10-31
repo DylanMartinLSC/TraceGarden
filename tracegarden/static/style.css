@@ -1,4 +1,51 @@
 @import url("/static/fonts.css");
+.wipe-mode {
+  position: relative;
+  height: 380px;
+}
+.wipe-mode > .pane {
+  position: absolute;
+  inset: 0;
+  border: 0 !important;
+}
+.wipe-mode > .pane .viewport {
+  height: 100%;
+  width: 100%;
+}
+.wipe-mode > #vectorPane .caption {
+  left: auto;
+  right: 12px;
+}
+.outline-view svg path {
+  fill: none !important;
+  stroke: #284c61 !important;
+  stroke-width: 1 !important;
+}
+#previews:fullscreen {
+  background: #f7f6f0;
+  height: 100vh;
+  border: 0;
+}
+#previews:fullscreen .viewport {
+  height: 100vh;
+}
+#parityFeedback {
+  font-size: 12px;
+  color: #526d5b;
+  margin: 8px 0;
+}
+#cornerWorkspace {
+  padding: 12px;
+  background: #f2f5ed;
+}
+.toolbar {
+  flex-wrap: wrap;
+  gap: 8px;
+}
+#dragVector {
+  font-size: 12px;
+  color: #315d45;
+}
 .projectbar {
   display: flex;
   gap: 6px;
