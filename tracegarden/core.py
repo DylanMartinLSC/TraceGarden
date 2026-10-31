@@ -211,6 +211,8 @@ def trace(data: bytes, options: Options) -> dict:
                 tuning.region_merge_threshold,
                 tuning.region_seed_colors,
                 tuning.region_merge_mode,
+                seed_scale=tuning.region_seed_scale,
+                seed_sigma=tuning.region_seed_sigma,
             )
         else:
             analysis["region_merging"] = {

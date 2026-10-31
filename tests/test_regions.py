@@ -109,3 +109,26 @@ def test_region_integration_is_disabled_by_default_and_records_application():
         actual = trace(buffer.getvalue(), settings)
     assert actual["analysis"]["region_merging"]["applied"]
     assert trace(buffer.getvalue(), settings)["svg"] == control["svg"]
+
+
+def test_graph_seeds_bound_noisy_flat_artwork_without_losing_a_thin_line():
+    clean = np.full((128, 128, 3), 220, dtype=np.uint8)
+    clean[10:118, 63] = 40
+    noise = np.random.default_rng(5).normal(0, 1, clean.shape)
+    image = Image.fromarray(
+        np.clip(clean.astype(float) + noise, 0, 255).astype(np.uint8)
+    )
+    result, stats = merge_regions(image, 256, mode="ms", seed_scale=50)
+    assert stats["applied"] and stats["seed_method"] == "felzenszwalb"
+    assert np.asarray(result)[20:108, 63].mean() < 80
+    repeated, other = merge_regions(image, 256, mode="ms", seed_scale=50)
+    assert result.tobytes() == repeated.tobytes() and stats == other
+    # The original quantized path remains byte-identical when scale is zero.
+    original, original_stats = merge_regions(image, 256, mode="ms")
+    explicit, explicit_stats = merge_regions(image, 256, mode="ms", seed_scale=0)
+    assert stats["initial_regions"] < original_stats["initial_regions"] / 10
+    assert original_stats == explicit_stats
+    if original is None:
+        assert explicit is None
+    else:
+        assert original.tobytes() == explicit.tobytes()

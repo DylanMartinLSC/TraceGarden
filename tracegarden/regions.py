@@ -2,6 +2,7 @@
 
 He, Kang & Morel, arXiv:2409.15940v1, equations 3.4, 3.10 and 3.11.
 This is the discrete merging stage only, not their alternating affine flow.
+Optional seed partition: Felzenszwalb & Huttenlocher, IJCV 2004, via scikit-image.
 """
 
 import heapq
@@ -11,7 +12,15 @@ from PIL import Image
 from skimage.measure import label
 
 
-def merge_regions(image, threshold, colors=128, mode="area", max_regions=50_000):
+def merge_regions(
+    image,
+    threshold,
+    colors=128,
+    mode="area",
+    max_regions=50_000,
+    seed_scale=0,
+    seed_sigma=0.5,
+):
     """Merge adjacent 4-connected regions in globally increasing cost order.
 
     Color distances use sum of squared RGB differences in byte units. The Area
@@ -23,13 +32,37 @@ def merge_regions(image, threshold, colors=128, mode="area", max_regions=50_000)
         raise ValueError("Region merging requires RGB and an area/ms criterion")
     if not np.isfinite(threshold) or threshold <= 0 or not 2 <= colors <= 256:
         raise ValueError("Choose a positive finite threshold and 2..256 seed colors")
-    quantized = np.asarray(image.quantize(colors=colors, dither=Image.Dither.NONE))
+    if (
+        not np.isfinite(seed_scale)
+        or seed_scale < 0
+        or not np.isfinite(seed_sigma)
+        or not 0 <= seed_sigma <= 2
+    ):
+        raise ValueError("Choose a finite nonnegative seed scale and sigma in 0..2")
+    if seed_scale > 0:
+        from skimage.segmentation import felzenszwalb
+
+        # Efficient adaptive segmentation replaces fragment-prone color seeds.
+        # min_size=1 adds no forced deletion of isolated accents. Split diagonal
+        # contacts below so every seed obeys our four-connected region model.
+        quantized = felzenszwalb(
+            np.asarray(image),
+            scale=seed_scale,
+            sigma=seed_sigma,
+            min_size=1,
+            channel_axis=-1,
+        )
+    else:
+        quantized = np.asarray(image.quantize(colors=colors, dither=Image.Dither.NONE))
     # background=-1 makes palette index zero an ordinary region.
     labels, count = label(quantized, background=-1, connectivity=1, return_num=True)
     stats = {
         "criterion": mode,
         "threshold": threshold,
         "seed_colors": colors,
+        "seed_method": "felzenszwalb" if seed_scale > 0 else "quantized",
+        "seed_scale": seed_scale,
+        "seed_sigma": seed_sigma,
         "initial_regions": int(count),
         "applied": False,
     }
