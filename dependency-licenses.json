@@ -355,8 +355,8 @@
   },
   {
     "name": "vtracer",
-    "version": "0.6.15",
-    "license": "MIT",
+    "version": "1.0.0a4",
+    "license": "MIT OR Apache-2.0",
     "homepage": "http://www.visioncortex.org/vtracer"
   },
   {

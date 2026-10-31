@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-import io
 import base64
+import io
 import time
 import xml.etree.ElementTree as ET
 from typing import Literal
 
-import vtracer
 from PIL import (
     Image,
-    ImageOps,
-    ImageFilter,
-    ImageEnhance,
     ImageCms,
+    ImageEnhance,
+    ImageFilter,
+    ImageOps,
     UnidentifiedImageError,
 )
 from pydantic import BaseModel, Field, field_validator
+
 from .svgdoc import serialize
 
 MAX_BYTES = 100 * 1024 * 1024
@@ -44,7 +44,9 @@ class Options(BaseModel):
     timeout_seconds: int = Field(120, ge=10, le=3600)
     smooth: bool = False
     remove_white: bool = False
-    layering: Literal["auto", "stacked", "cutout", "mosaic", "smooth"] = "stacked"
+    layering: Literal["auto", "native", "stacked", "cutout", "mosaic", "smooth"] = (
+        "stacked"
+    )
     layer_difference: int = Field(16, ge=0, le=255)
     geometry: bool = False
     gradients: bool = False
@@ -150,7 +152,7 @@ def trace(data: bytes, options: Options) -> dict:
         )
     if automatic_layout:
         options = options.model_copy(
-            update={"layering": "stacked" if options.preset == "photo" else "smooth"}
+            update={"layering": "stacked" if options.preset == "photo" else "native"}
         )
         analysis["layout"] = options.layering
     removed = {}
@@ -239,22 +241,9 @@ def trace(data: bytes, options: Options) -> dict:
 
         root = centerlines(rgb, options.threshold, options.speckle)
     else:
-        svg = vtracer.convert_pixels_to_svg(
-            list(pixels(image)),
-            image.size,
-            colormode="color",
-            hierarchical=options.layering,
-            mode="polygon" if options.preset == "pixel" else "spline",
-            layer_difference=options.layer_difference,
-            filter_speckle=options.speckle,
-            color_precision=options.precision,
-            corner_threshold=options.corner,
-            length_threshold=4.0,
-            max_iterations=10,
-            splice_threshold=45,
-            path_precision=3,
-        )
-        root = ET.fromstring(svg)
+        from .engine import native_trace
+
+        root = native_trace(image, options, shared=options.layering == "native")
     root.set("viewBox", f"0 0 {image.width} {image.height}")
     root.set("role", "img")
     reconstructed = 0
@@ -262,11 +251,17 @@ def trace(data: bytes, options: Options) -> dict:
     if (
         options.geometry
         and options.preset != "centerline"
-        and options.layering not in {"mosaic", "smooth"}
+        and options.layering not in {"mosaic", "smooth", "native"}
     ):
         from .enhance import primitives
 
         reconstructed = primitives(root)
+    if options.geometry and options.layering == "native" and not full_alpha:
+        from .engine import regularize_shared
+
+        reconstructed = regularize_shared(
+            root, opaque=image.getchannel("A").getextrema() == (255, 255)
+        )
     if options.gradients and options.preset != "centerline":
         from .enhance import gradients
 

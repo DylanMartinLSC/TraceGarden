@@ -58,5 +58,5 @@ tinycss2==1.5.1
 typing-extensions==4.16.0
 typing-inspection==0.4.4
 uvicorn==0.54.0
-vtracer==0.6.15
+vtracer==1.0.0a4
 webencodings==0.6.1

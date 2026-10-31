@@ -1,6 +1,7 @@
 """Explicit desktop clipboard export; no native writes occur during conversion."""
 
 from __future__ import annotations
+
 import io
 import platform
 import shutil
@@ -9,7 +10,8 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from .svgdoc import validate_svg, serialize
+
+from .svgdoc import serialize, validate_svg
 
 
 def _windows_clipboard(svg, png=None):
@@ -122,9 +124,7 @@ def copy_vector(svg):
 
         return _windows_clipboard(clean, export_document(clean, "png"))
     if system == "Darwin":
-        # UTF-8 SVG is universally available even without an optional GUI toolkit.
-        subprocess.run(["pbcopy"], input=clean.encode(), check=True)
-        return {"formats": ["SVG text"]}
+        return _mac_clipboard(clean)
     if shutil.which("wl-copy"):
         subprocess.run(
             ["wl-copy", "--type", "image/svg+xml"], input=clean.encode(), check=True
@@ -140,3 +140,44 @@ def copy_vector(svg):
     raise ValueError(
         "No desktop clipboard provider is installed. Use Copy SVG text or download the file."
     )
+
+
+def _mac_clipboard(svg):
+    """Use the system pasteboard, including the public SVG vector type."""
+    import ctypes
+
+    ctypes.CDLL("/System/Library/Frameworks/AppKit.framework/AppKit")
+    objc = ctypes.CDLL("/usr/lib/libobjc.A.dylib")
+    objc.objc_getClass.argtypes = [ctypes.c_char_p]
+    objc.objc_getClass.restype = ctypes.c_void_p
+    objc.sel_registerName.argtypes = [ctypes.c_char_p]
+    objc.sel_registerName.restype = ctypes.c_void_p
+    address = ctypes.cast(objc.objc_msgSend, ctypes.c_void_p).value
+
+    def send(receiver, selector, *args):
+        call = ctypes.CFUNCTYPE(
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            ctypes.c_void_p,
+            *[ctypes.c_void_p for _ in args],
+        )(address)
+        return call(receiver, objc.sel_registerName(selector.encode()), *args)
+
+    def string(value):
+        data = ctypes.c_char_p(value.encode("utf-8"))
+        return send(
+            objc.objc_getClass(b"NSString"),
+            "stringWithUTF8String:",
+            ctypes.cast(data, ctypes.c_void_p),
+        )
+
+    pool = send(objc.objc_getClass(b"NSAutoreleasePool"), "new")
+    try:
+        board = send(objc.objc_getClass(b"NSPasteboard"), "generalPasteboard")
+        send(board, "clearContents")
+        for mime in ["public.svg-image", "image/svg+xml", "public.utf8-plain-text"]:
+            if not send(board, "setString:forType:", string(svg), string(mime)):
+                raise OSError("Could not write the macOS pasteboard.")
+    finally:
+        send(pool, "drain")
+    return {"formats": ["SVG", "Unicode text"]}

@@ -1,0 +1,488 @@
+{
+  "notes": "Publicly offered demo pairs only. No uploads, accounts, private artwork, model training or vendor assets redistributed. Error to vendor output measures agreement, not objective superiority; input error can reward preserving JPEG artifacts. Sample set is vendor-selected.",
+  "results": [
+    {
+      "case": "bubble-tea",
+      "urls": {
+        "svg": "https://vectorizer.ai/cf/vai/animations2/bubble-tea_9e8da9362815e313a3c6171cd875e97f.svg",
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/bubble-tea_f41266cea1ea537074a27b71c21cafbc.jpg"
+      },
+      "sha256": {
+        "svg": "089f44d69048ab5f53818017789d049e7bad8981dead49b8633291207ebd6fc1",
+        "jpg": "592c6aba6b3e3ae7a59f844313274595fa694741300036eabecbefb7212f2468"
+      },
+      "size": [
+        372,
+        505
+      ],
+      "seconds": 0.2468,
+      "paths": 295,
+      "svg_bytes": 118783,
+      "reference_svg_bytes": 49609,
+      "mae_vs_vendor": 0.031091,
+      "boundary_vs_vendor_px": 0.5184,
+      "mae_vs_input": 0.024987,
+      "vendor_mae_vs_input": 0.020646,
+      "analysis": {
+        "preset": "logo",
+        "colors": 10,
+        "palette": [
+          "#ffffff",
+          "#feedd3",
+          "#deecf1",
+          "#9addf7",
+          "#f7d1c4",
+          "#feb184",
+          "#7ebbd1",
+          "#e19683",
+          "#c46b69",
+          "#501f19"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.6044,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "bull-mascot",
+      "urls": {
+        "svg": "https://vectorizer.ai/cf/vai/animations2/bull-mascot_3646dacf2d438c970567b60e0344a2ee.svg",
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/bull-mascot_59e0d5c9270f6a776a1324dae79b75d5.jpg"
+      },
+      "sha256": {
+        "svg": "8720563d7e51081845f5c3c9bcdf9f8a32f02d9e418dd91da56094882f91cd9d",
+        "jpg": "359104bc3bab4582ecc3a7e62ddf28e1c7816eaadea0fc1f7bd4211d29a06640"
+      },
+      "size": [
+        768,
+        705
+      ],
+      "seconds": 0.1572,
+      "paths": 23,
+      "svg_bytes": 25444,
+      "reference_svg_bytes": 33800,
+      "mae_vs_vendor": 0.005358,
+      "boundary_vs_vendor_px": 0.1884,
+      "mae_vs_input": 0.009171,
+      "vendor_mae_vs_input": 0.006746,
+      "analysis": {
+        "preset": "logo",
+        "colors": 3,
+        "palette": [
+          "#ffffff",
+          "#d60a1d",
+          "#000000"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.861,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "cloud-computing",
+      "urls": {
+        "svg": "https://vectorizer.ai/cf/vai/animations2/cloud-computing_0eb699a0b3a517dbed1b311f42bc2ec9.svg",
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/cloud-computing_86bdc57687a0bdfb6aa7b8980706a032.jpg"
+      },
+      "sha256": {
+        "svg": "84e5e7d1b26a545deb74617b31fa8ab0d0ba8e8faa042104d9003cfd05b2c8a1",
+        "jpg": "51411abf3bb9d5e109d7eb2503c81330ac32a0caa05879950b478d01f6562446"
+      },
+      "size": [
+        536,
+        509
+      ],
+      "seconds": 0.1451,
+      "paths": 426,
+      "svg_bytes": 138378,
+      "reference_svg_bytes": 85549,
+      "mae_vs_vendor": 0.01293,
+      "boundary_vs_vendor_px": 0.3075,
+      "mae_vs_input": 0.015908,
+      "vendor_mae_vs_input": 0.00748,
+      "analysis": {
+        "preset": "logo",
+        "colors": 10,
+        "palette": [
+          "#ffffff",
+          "#e7e7ec",
+          "#a3e3c5",
+          "#c5c8c9",
+          "#fc8171",
+          "#96c0b7",
+          "#94acb2",
+          "#758a9c",
+          "#464c6f",
+          "#293866"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.7135,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "coffee-fox",
+      "urls": {
+        "svg": "https://vectorizer.ai/cf/vai/animations2/coffee-fox_8799ba71da1e3243591d15f68c26bf20.svg",
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/coffee-fox_eaf3712a2ba066d5209f78b5407d7177.jpg"
+      },
+      "sha256": {
+        "svg": "f8706b90a6b039ed11fe3578f14951b684d1c552291d870c5940552e34c05912",
+        "jpg": "e416ab8b8d2d1ef2375dfefb0e520d916099dde71a6bb94badd64fd56be1fd1f"
+      },
+      "size": [
+        648,
+        768
+      ],
+      "seconds": 0.1831,
+      "paths": 266,
+      "svg_bytes": 104614,
+      "reference_svg_bytes": 50660,
+      "mae_vs_vendor": 0.011362,
+      "boundary_vs_vendor_px": 0.3146,
+      "mae_vs_input": 0.011235,
+      "vendor_mae_vs_input": 0.008876,
+      "analysis": {
+        "preset": "logo",
+        "colors": 12,
+        "palette": [
+          "#ffffff",
+          "#fdefda",
+          "#df9d6e",
+          "#0fa499",
+          "#f86812",
+          "#dc702e",
+          "#c4591a",
+          "#9e4616",
+          "#563b2b",
+          "#391f14",
+          "#18312f",
+          "#000000"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.7228,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "coffee-shop",
+      "urls": {
+        "svg": "https://vectorizer.ai/cf/vai/animations2/coffee-shop_45467bb462dc932d08637a02e484781d.svg",
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/coffee-shop_f6fa26dbf2c6a2fede8c8df9e0b962f4.jpg"
+      },
+      "sha256": {
+        "svg": "295b6c5bc1cbcf406d2980a9fa01179733b99ed694212d7d87eb6f5d32a43d90",
+        "jpg": "e82ad38adc6ec3178744b019f450ec311dd3d1ea68f7bf23209f97e8f3943775"
+      },
+      "size": [
+        759,
+        768
+      ],
+      "seconds": 0.2195,
+      "paths": 122,
+      "svg_bytes": 70754,
+      "reference_svg_bytes": 54280,
+      "mae_vs_vendor": 0.011445,
+      "boundary_vs_vendor_px": 0.2107,
+      "mae_vs_input": 0.014987,
+      "vendor_mae_vs_input": 0.010994,
+      "analysis": {
+        "preset": "logo",
+        "colors": 9,
+        "palette": [
+          "#ffffff",
+          "#f5e2c8",
+          "#e6c9a9",
+          "#d2c3b2",
+          "#d0af93",
+          "#bd9170",
+          "#d2520c",
+          "#8a3a11",
+          "#321305"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.5819,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "geometric-shapes",
+      "urls": {
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/geometric-shapes_581e5f63d7b2728e9611ace7471ff3ac.jpg",
+        "svg": "https://vectorizer.ai/cf/vai/animations2/geometric-shapes_a64df84d5011cb439cc4df46bf8d5ade.svg"
+      },
+      "sha256": {
+        "jpg": "a20a8fb4cd491f41a5eb1d721cbe414389acafe8099121bbc97ff1fa92dccf74",
+        "svg": "8c1a0d2955de7c3409dbd09c6784552e9a82f7749ccbd122816a1afe263be02f"
+      },
+      "size": [
+        768,
+        675
+      ],
+      "seconds": 0.1192,
+      "paths": 20,
+      "svg_bytes": 15419,
+      "reference_svg_bytes": 8225,
+      "mae_vs_vendor": 0.004857,
+      "boundary_vs_vendor_px": 0.2208,
+      "mae_vs_input": 0.004729,
+      "vendor_mae_vs_input": 0.004962,
+      "analysis": {
+        "preset": "logo",
+        "colors": 9,
+        "palette": [
+          "#ffffff",
+          "#dcdfdb",
+          "#a2d1c1",
+          "#d0b6ac",
+          "#93b2b2",
+          "#ed7057",
+          "#808891",
+          "#af635d",
+          "#122c51"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.8328,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "leaping-stag",
+      "urls": {
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/leaping-stag_a9ef47f7033aa2db68514921da28a401.jpg",
+        "svg": "https://vectorizer.ai/cf/vai/animations2/leaping-stag_ec6c14a23eb43fdfc44652fe450596a3.svg"
+      },
+      "sha256": {
+        "jpg": "a513b0748fdc07313233d0d6741e3e821fc3b7917d2242d7689426e1fa0e3021",
+        "svg": "c1ce7b47f0a571cf023cdd71e2679ba9221e9ea1e98fb658dd2f11070f9433f6"
+      },
+      "size": [
+        768,
+        713
+      ],
+      "seconds": 0.1284,
+      "paths": 39,
+      "svg_bytes": 75390,
+      "reference_svg_bytes": 110293,
+      "mae_vs_vendor": 0.012304,
+      "boundary_vs_vendor_px": 0.4234,
+      "mae_vs_input": 0.011273,
+      "vendor_mae_vs_input": 0.007212,
+      "analysis": {
+        "preset": "logo",
+        "colors": 2,
+        "palette": [
+          "#ffffff",
+          "#000000"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.8859,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "lion-mascot",
+      "urls": {
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/lion-mascot_16e232c39c4b1e7e3f34fcd5683f41c8.jpg",
+        "svg": "https://vectorizer.ai/cf/vai/animations2/lion-mascot_235d0b44bcbd4df0c3d022726576456f.svg"
+      },
+      "sha256": {
+        "jpg": "c7da7c2ba84d37abc64a074550b03c3190fd9aba2e4908f6c8e79d61b1164d85",
+        "svg": "8a9a5d23f4d4bd57799c89b9e7dbcb07f449af47e9185635855ac1d3dfa99fc5"
+      },
+      "size": [
+        597,
+        746
+      ],
+      "seconds": 0.2371,
+      "paths": 451,
+      "svg_bytes": 167069,
+      "reference_svg_bytes": 42154,
+      "mae_vs_vendor": 0.013957,
+      "boundary_vs_vendor_px": 0.3053,
+      "mae_vs_input": 0.015297,
+      "vendor_mae_vs_input": 0.008728,
+      "analysis": {
+        "preset": "logo",
+        "colors": 13,
+        "palette": [
+          "#ffffff",
+          "#e9e4d6",
+          "#cbc3aa",
+          "#e3aa1c",
+          "#c39826",
+          "#9d8e5c",
+          "#967527",
+          "#736c53",
+          "#655127",
+          "#4b4533",
+          "#3f321e",
+          "#211914",
+          "#000000"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.5939,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "mountain-supply",
+      "urls": {
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/mountain-supply_8a2f8b3f470d16e41143917a3e475a9e.jpg",
+        "svg": "https://vectorizer.ai/cf/vai/animations2/mountain-supply_f4e2d9efa7dc34fe1ba1a3b968fa1245.svg"
+      },
+      "sha256": {
+        "jpg": "a28925815c8a64daf16982d28082d3b962861837982bfc2ab611eb8fd7e61bc5",
+        "svg": "ec5b1a3e9ce00409c3d2c4623a98a8d9a37706f381a11e728062a7a5310f37a3"
+      },
+      "size": [
+        768,
+        768
+      ],
+      "seconds": 0.2772,
+      "paths": 42,
+      "svg_bytes": 38145,
+      "reference_svg_bytes": 51169,
+      "mae_vs_vendor": 0.010275,
+      "boundary_vs_vendor_px": 0.1926,
+      "mae_vs_input": 0.023033,
+      "vendor_mae_vs_input": 0.018592,
+      "analysis": {
+        "preset": "logo",
+        "colors": 2,
+        "palette": [
+          "#ffffff",
+          "#0c552a"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.7086,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "national-park",
+      "urls": {
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/national-park_09e9162ac7b1aa413d2774df2ffe0241.jpg",
+        "svg": "https://vectorizer.ai/cf/vai/animations2/national-park_12fff26cb1809c6b1bb42a48c53a26fd.svg"
+      },
+      "sha256": {
+        "jpg": "2f4811aeb7b43c6bd78e8ed56ea530c26b51e0ab4f476cf06d20940eb4f0c3cd",
+        "svg": "6738dcf89f5d6b9a9499ec6fd4503dc3cdfc6d579b4f38a44e1669b51d27245f"
+      },
+      "size": [
+        578,
+        568
+      ],
+      "seconds": 0.2301,
+      "paths": 69,
+      "svg_bytes": 51496,
+      "reference_svg_bytes": 64956,
+      "mae_vs_vendor": 0.014901,
+      "boundary_vs_vendor_px": 0.3006,
+      "mae_vs_input": 0.019179,
+      "vendor_mae_vs_input": 0.011462,
+      "analysis": {
+        "preset": "logo",
+        "colors": 11,
+        "palette": [
+          "#ffffff",
+          "#f9edce",
+          "#ebbd4e",
+          "#e4b573",
+          "#d49f2c",
+          "#d4be81",
+          "#a2ae9b",
+          "#d88f59",
+          "#cd5628",
+          "#408d85",
+          "#1c3528"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.5818,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "seaside-panther",
+      "urls": {
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/seaside-panther_47de219b64f8fd2efb738b5b5167eea3.jpg",
+        "svg": "https://vectorizer.ai/cf/vai/animations2/seaside-panther_a88537f9ff1043f65455246bc211136d.svg"
+      },
+      "sha256": {
+        "jpg": "d6011606f91a69ad618a6ad62bc4e5729b2acdcf916b7a28dda8eb729413b97d",
+        "svg": "c49b0ece06e7cdc8d8cb2a5cb51da9462863b13e0e3affcb9f32cb051d639d4f"
+      },
+      "size": [
+        640,
+        472
+      ],
+      "seconds": 0.2684,
+      "paths": 616,
+      "svg_bytes": 229068,
+      "reference_svg_bytes": 135692,
+      "mae_vs_vendor": 0.023396,
+      "boundary_vs_vendor_px": 0.5807,
+      "mae_vs_input": 0.02885,
+      "vendor_mae_vs_input": 0.01868,
+      "analysis": {
+        "preset": "logo",
+        "colors": 9,
+        "palette": [
+          "#fceecc",
+          "#e4c699",
+          "#ecb86e",
+          "#d3a65f",
+          "#3497d0",
+          "#273c4c",
+          "#192837",
+          "#073840",
+          "#09101a"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.3292,
+        "layout": "native"
+      }
+    },
+    {
+      "case": "wolf-mascot",
+      "urls": {
+        "jpg": "https://vectorizer.ai/cf/vai/animations2/wolf-mascot_1bbe657adc4da674ebeb2c794e8e3e0f.jpg",
+        "svg": "https://vectorizer.ai/cf/vai/animations2/wolf-mascot_eb4ff7f59502007820d0b93763f0ba9e.svg"
+      },
+      "sha256": {
+        "jpg": "b829bc68e8dd1247266d79c1950272157184fc5e40f8fe1ae2ecc39038c28aee",
+        "svg": "e0b6b3f45646afd70a72354cbc3b93ac055c5c241c0b5f5e7f52b3a9bedf38d9"
+      },
+      "size": [
+        476,
+        572
+      ],
+      "seconds": 0.1591,
+      "paths": 238,
+      "svg_bytes": 133101,
+      "reference_svg_bytes": 139587,
+      "mae_vs_vendor": 0.021575,
+      "boundary_vs_vendor_px": 0.2297,
+      "mae_vs_input": 0.023403,
+      "vendor_mae_vs_input": 0.014399,
+      "analysis": {
+        "preset": "logo",
+        "colors": 9,
+        "palette": [
+          "#ffffff",
+          "#c0c3ca",
+          "#27d0f2",
+          "#34a1e1",
+          "#0996f2",
+          "#0680ea",
+          "#4d5765",
+          "#1a4679",
+          "#000000"
+        ],
+        "palette_error": 0,
+        "flat_color_mass": 0.4617,
+        "layout": "native"
+      }
+    }
+  ]
+}

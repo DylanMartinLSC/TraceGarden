@@ -103,6 +103,11 @@ def primitives(root, tolerance=0.8):
         if fit_rotated_rectangle(el, tolerance):
             count += 1
             continue
+        from .starfit import fit_rounded_star
+
+        if fit_rounded_star(el, tolerance):
+            count += 1
+            continue
         if 3 <= len(corners) <= 24:
             residual = [
                 abs(cv2.pointPolygonTest(corners, tuple(map(float, p)), True))

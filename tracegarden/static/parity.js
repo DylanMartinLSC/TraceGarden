@@ -212,8 +212,10 @@ $("applyShape").onclick = async () => {
     return;
   }
   try {
+    const item = items[current],
+      original = item.svg;
     const result = await request("/api/edit", {
-      svg: items[current].svg,
+      svg: original,
       operation: "shape",
       indices: selectedIndices(),
       shape_type: $("paramKind").value,
@@ -224,11 +226,12 @@ $("applyShape").onclick = async () => {
       sides: Number($("paramSides").value),
       inner_ratio: Number($("paramInner").value),
     });
+    if (items[current] !== item || item.svg !== original) return;
     snapshot();
     items[current].svg = result.svg;
     render();
     scheduleSave();
-    status('Shape geometry applied.');
+    status("Shape geometry applied.");
   } catch (error) {
     status(error.message, true);
   }
@@ -272,11 +275,14 @@ $("selectSimilar").onclick = async () => {
     return;
   }
   try {
+    const item = items[current],
+      original = item.svg;
     const result = await request("/api/edit", {
-      svg: items[current].svg,
+      svg: original,
       operation: "similar",
       indices: [selectedIndices()[0]],
     });
+    if (items[current] !== item || item.svg !== original) return;
     selection = new Set(result.matches.map((match) => match.index));
     markSelection();
     status(`${selection.size} matching shapes selected.`);

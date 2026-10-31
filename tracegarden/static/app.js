@@ -13,6 +13,7 @@ let cancelled = false,
   nodeIndex = null,
   nodeMode = "nodes";
 let autosaveTimer = null,
+  saveGeneration = 0,
   brushActive = false,
   painting = false;
 
@@ -348,12 +349,15 @@ async function editOperation(operation) {
     return;
   }
   try {
+    const item = items[current],
+      original = item.svg;
     const result = await request("/api/edit", {
-      svg: items[current].svg,
+      svg: original,
       operation,
       indices: selectedIndices(),
       tolerance: 1,
     });
+    if (items[current] !== item || item.svg !== original) return;
     snapshot();
     items[current].svg = result.svg;
     render();
@@ -505,6 +509,8 @@ async function editNodes(mode = "nodes") {
     return;
   }
   try {
+    const item = items[current],
+      original = item.svg;
     const index = selectedIndices()[0];
     const result = await request("/api/edit", {
       svg: items[current].svg,
@@ -512,6 +518,7 @@ async function editNodes(mode = "nodes") {
       indices: [index],
       tolerance: 1,
     });
+    if (items[current] !== item || item.svg !== original) return;
     if (mode === "nodes" && result.subpaths.length !== 1)
       throw Error("Split this compound shape before editing nodes.");
     nodeMode = mode;
@@ -526,6 +533,8 @@ async function editNodes(mode = "nodes") {
 }
 async function applyNodes() {
   try {
+    const item = items[current],
+      original = item.svg;
     const points = $("nodes")
       .value.trim()
       .split("\n")
@@ -536,6 +545,7 @@ async function applyNodes() {
       indices: [nodeIndex],
       points,
     });
+    if (items[current] !== item || item.svg !== original) return;
     snapshot();
     items[current].svg = result.svg;
     render();
@@ -553,8 +563,12 @@ function database() {
     r.onerror = () => reject(r.error);
   });
 }
-async function storeProject(value) {
+async function storeProject(value, generation = saveGeneration) {
   const db = await database();
+  if (generation !== saveGeneration) {
+    db.close();
+    return;
+  }
   return new Promise((resolve, reject) => {
     const tx = db.transaction("projects", "readwrite");
     tx.objectStore("projects").put(value, "autosave");
@@ -595,9 +609,10 @@ async function project() {
 }
 function scheduleSave() {
   clearTimeout(autosaveTimer);
+  const generation = ++saveGeneration;
   autosaveTimer = setTimeout(async () => {
     try {
-      if (items.length) await storeProject(await project());
+      if (items.length) await storeProject(await project(), generation);
     } catch {
       status(
         "Browser autosave is unavailable or full. Save a project file to keep your work.",
@@ -927,6 +942,7 @@ $("clear").onclick = async () => {
   busy = true;
   status("Clearing session…");
   clearTimeout(autosaveTimer);
+  ++saveGeneration;
   items.forEach((item) => URL.revokeObjectURL(item.url));
   items = [];
   current = 0;
