@@ -14,7 +14,7 @@ from pathlib import Path
 from .svgdoc import serialize, validate_svg
 
 
-def _windows_clipboard(svg, png=None):
+def _windows_clipboard(svg, png=None, pdf=None):
     import ctypes
     from ctypes import wintypes
 
@@ -51,7 +51,11 @@ def _windows_clipboard(svg, png=None):
     formats = [
         (13, (svg + "\0").encode("utf-16le")),
         (user32.RegisterClipboardFormatW("image/svg+xml"), svg.encode() + b"\0"),
+        (user32.RegisterClipboardFormatW("image/x-inkscape-svg"), svg.encode() + b"\0"),
     ]
+    if pdf:
+        for mime in ["Portable Document Format", "application/pdf"]:
+            formats.append((user32.RegisterClipboardFormatW(mime), pdf))
     # A real CF_HDROP file lets Explorer and desktop design apps paste artwork.
     folder = Path(tempfile.gettempdir()) / "TraceGarden-clipboard"
     folder.mkdir(exist_ok=True)
@@ -74,6 +78,10 @@ def _windows_clipboard(svg, png=None):
         matte.save(bmp, format="BMP")
         formats.append((8, bmp.getvalue()[14:]))
     blocks = []
+    from .emf import create_metafile
+
+    metafile = create_metafile(svg)
+    has_metafile = bool(metafile)
     try:
         for fmt, data in formats:
             handle = kernel.GlobalAlloc(0x0002, len(data))
@@ -103,15 +111,26 @@ def _windows_clipboard(svg, png=None):
                 block[1] = (
                     None  # Windows owns the allocation after successful transfer.
                 )
+            if metafile:
+                if not user32.SetClipboardData(14, metafile):
+                    raise OSError("Could not transfer the vector metafile.")
+                metafile = None
         finally:
             user32.CloseClipboard()
             user32.DestroyWindow(window)
     finally:
+        if metafile:
+            gdi = ctypes.WinDLL("gdi32")
+            gdi.DeleteEnhMetaFile.argtypes = [wintypes.HANDLE]
+            gdi.DeleteEnhMetaFile(metafile)
         for _, handle in blocks:
             if handle:
                 kernel.GlobalFree(handle)
     return {
-        "formats": ["SVG", "Unicode text", "file drop"] + (["bitmap"] if png else []),
+        "formats": ["SVG", "Unicode text", "file drop"]
+        + (["PDF"] if pdf else [])
+        + (["EMF vectors"] if has_metafile else [])
+        + (["bitmap"] if png else []),
         "temporary_file": str(target),
     }
 
@@ -122,9 +141,13 @@ def copy_vector(svg):
     if system == "Windows":
         from .exporters import export_document
 
-        return _windows_clipboard(clean, export_document(clean, "png"))
+        return _windows_clipboard(
+            clean, export_document(clean, "png"), export_document(clean, "pdf")
+        )
     if system == "Darwin":
-        return _mac_clipboard(clean)
+        from .exporters import export_document
+
+        return _mac_clipboard(clean, export_document(clean, "pdf"))
     if shutil.which("wl-copy"):
         subprocess.run(
             ["wl-copy", "--type", "image/svg+xml"], input=clean.encode(), check=True
@@ -142,7 +165,7 @@ def copy_vector(svg):
     )
 
 
-def _mac_clipboard(svg):
+def _mac_clipboard(svg, pdf=None):
     """Use the system pasteboard, including the public SVG vector type."""
     import ctypes
 
@@ -178,6 +201,16 @@ def _mac_clipboard(svg):
         for mime in ["public.svg-image", "image/svg+xml", "public.utf8-plain-text"]:
             if not send(board, "setString:forType:", string(svg), string(mime)):
                 raise OSError("Could not write the macOS pasteboard.")
+        if pdf:
+            buffer = ctypes.create_string_buffer(pdf)
+            data = send(
+                objc.objc_getClass(b"NSData"),
+                "dataWithBytes:length:",
+                ctypes.cast(buffer, ctypes.c_void_p),
+                len(pdf),
+            )
+            if not send(board, "setData:forType:", data, string("com.adobe.pdf")):
+                raise OSError("Could not write vector PDF to the macOS pasteboard.")
     finally:
         send(pool, "drain")
-    return {"formats": ["SVG", "Unicode text"]}
+    return {"formats": ["SVG", "Unicode text"] + (["PDF"] if pdf else [])}

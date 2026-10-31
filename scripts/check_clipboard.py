@@ -30,11 +30,31 @@ if system == "Windows":
             kernel.GlobalUnlock(handle)
         assert api.IsClipboardFormatAvailable(15)  # Explorer file paste
         assert api.IsClipboardFormatAvailable(8)  # Bitmap fallback
+        assert api.IsClipboardFormatAvailable(
+            api.RegisterClipboardFormatW("Portable Document Format")
+        )
+        metafile = api.GetClipboardData(14)
+        assert metafile
+        gdi = ctypes.WinDLL("gdi32")
+        gdi.GetEnhMetaFileBits.argtypes = [
+            wintypes.HANDLE,
+            wintypes.UINT,
+            ctypes.c_void_p,
+        ]
+        size = gdi.GetEnhMetaFileBits(metafile, 0, None)
+        buffer = ctypes.create_string_buffer(size)
+        assert gdi.GetEnhMetaFileBits(metafile, size, buffer) == size
+        assert buffer.raw[40:44] == b" EMF"
     finally:
         api.CloseClipboard()
 elif system == "Darwin":
     # pbpaste independently reads the plaintext fallback from the same pasteboard.
     assert "<path" in subprocess.check_output(["pbpaste"]).decode()
+    assert "PDF" in result["formats"]
+    pdf_descriptor = subprocess.check_output(
+        ["osascript", "-e", "the clipboard as «class PDF »"]
+    ).decode()
+    assert "25504446" in pdf_descriptor.upper()
 else:
     text = subprocess.check_output(
         ["xclip", "-selection", "clipboard", "-t", "image/svg+xml", "-o"]

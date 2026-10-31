@@ -21,7 +21,7 @@ References: [Vectorizer.AI](https://vectorizer.ai/) and [Vector Magic Desktop](h
 | DXF | Exact circular/elliptical arcs, cubic splines, modern or R12 polylines; independent ezdxf reader tests |
 | Bitmap export | PNG/JPG/GIF/BMP/TIFF, physical dimensions/DPI and alpha where supported; independent Pillow reads |
 | Export controls | Group by color, fill/stroke styles, cubic/quadratic/polyline compatibility, physical width and generic CMYK PDF |
-| Clipboard/drag | Native Windows/macOS/Linux SVG clipboard with system fallbacks; real CI round trips; browser SVG file drag payload |
+| Clipboard/drag | Native SVG clipboard, Windows/macOS PDF and Windows EMF vectors for opaque solids; real CI round trips and offscreen GDI replay; browser SVG file drag payload |
 | Large inputs/resources | 100 MB/100 MP source limit, JPEG draft decoding, configurable memory/detail/time budgets; large-JPEG regression |
 | Native distribution | Windows Setup/portable, macOS ARM/Intel DMG, Linux AppImage; packaged tracing/export/shutdown checks and installer acceptance |
 | Updates | Explicit public GitHub release lookup and download link; no automatic network requests during conversion |
